@@ -7,7 +7,25 @@
 static const unsigned short HASH_MIN_N = 4;
 static const unsigned short HASH_MAX_N = 50;
 
-bool criar_tabela_hash(HashTable_t* table)
+Registro_t* alloc_table_items(unsigned long initial_capacity)
+{
+	return (Registro_t*)malloc(sizeof(Registro_t) * initial_capacity);
+}
+
+SlotState_t* alloc_table_states(unsigned long initial_capacity)
+{
+	return (SlotState_t*)malloc(sizeof(SlotState_t) * initial_capacity);
+}
+
+void init_table_states(HashTable_t* table, unsigned long initial_capacity)
+{
+	for (unsigned int slot = 0; slot < initial_capacity; slot++)
+	{
+		table->states[slot] = OPEN;
+	}
+}
+
+bool ht_init(HashTable_t* table)
 {
 	unsigned long initial_capacity;
 
@@ -19,17 +37,16 @@ bool criar_tabela_hash(HashTable_t* table)
 
 	table->N = HASH_MIN_N;
 	table->capacity = initial_capacity;
-	table->items = (Registro_t*)malloc(sizeof(Registro_t) * initial_capacity);
-	table->states = (SlotState_t*)malloc(sizeof(SlotState_t) * initial_capacity);
-	for (unsigned int slot = 0; slot < initial_capacity; slot++)
-	{
-		table->states[slot] = OPEN;
-	}
+	table->items = alloc_table_items(initial_capacity);
+
+	table->states = alloc_table_states(initial_capacity);
+	init_table_states(table, initial_capacity);
+
 	table->count = 0;
 	return true;
 }
 
-bool destruir_tabela_hash(HashTable_t* table)
+bool ht_clear(HashTable_t* table)
 {
 	free(table->items);
 	free(table->states);
@@ -39,55 +56,80 @@ bool destruir_tabela_hash(HashTable_t* table)
 	return true;
 }
 
-unsigned long calcular_valor_do_hash(char* key, unsigned long M)
+unsigned long ht_hash_string(char* key, unsigned long table_capacity)
 {
-	unsigned long h, a = 31415, b = 27183;
-	for (h = 0; *key != '\0'; key++)
+	unsigned long total = 0, a = A;
+
+	for (; *key != '\0'; key++)
 	{
-		h = (a * h + *key) % M;
-		a = (a * b) % (M - 1);
+		total = (a * total + *key) % table_capacity;
+		a = (a * B) % (table_capacity - 1);
 	}
-	return h;
+
+	return total;
 }
 
-bool inserir_na_tabela_hash(HashTable_t* table, Registro_t* registro)
+bool ht_has_high_density(HashTable_t* table)
 {
-	unsigned long h;
+	return densidade_da_tabela_hash(table) > HT_HIGH_DENSITY;
+}
 
-	// Se estiver com densidade alta (0.75?), vamos ampliar a tabela
-	if (densidade_da_tabela_hash(table) > 0.75)
+bool ht_has_available_space(const HashTable_t* table)
+{
+	return table->count != table->capacity;
+}
+
+bool ht_attempt_expansion(HashTable_t* table)
+{
+	return (ht_expand(table) || ht_has_available_space(table));
+}
+
+void ht_insert_registro_at_index(HashTable_t* table, const Registro_t* registro, const unsigned long cell_index)
+{
+	memcpy(&table->items[cell_index], registro, sizeof(Registro_t));
+	table->states[cell_index] = OCCUPIED;
+	table->count++;
+}
+
+unsigned long find_cell_index_for_insertion(const HashTable_t* table, Registro_t* registro)
+{
+	unsigned long candidate_cell_index = ht_hash_string(registro->name, table->capacity);
+
+	while (table->states[candidate_cell_index] == OCCUPIED)
 	{
-		// Se nao conseguir expandir e nao tiver mais espaco, aborta.
-		if (!expandir_tabela_hash(table) && (table->count == table->capacity))
+		candidate_cell_index = (candidate_cell_index + 1) % table->capacity;
+	}
+	return candidate_cell_index;
+}
+
+bool ht_insert(HashTable_t* table, Registro_t* registro)
+{
+	if (ht_has_high_density(table))
+	{
+		if (!ht_attempt_expansion(table)) // TODO: more explicit comparison
 		{
-			return false;
+			return HT_FAILURE;
 		}
 	}
 
-	// A tabela tem espaco para insercao da chave
-	h = calcular_valor_do_hash(registro->name, table->capacity);
-	while (table->states[h] == OCCUPIED)
-	{
-		h = (h + 1) % table->capacity;
-	}
-	memcpy(&table->items[h], registro, sizeof(Registro_t));
-	table->states[h] = OCCUPIED;
-	table->count++;
-	return true;
+	const unsigned long cell_index = find_cell_index_for_insertion(table, registro);
+	ht_insert_registro_at_index(table, registro, cell_index);
+
+	return HT_SUCCESS;
 }
 
-bool busca_na_tabela_hash(HashTable_t* table, Registro_t* registro)
+bool ht_search(HashTable_t* table, Registro_t* registro)
 {
 	unsigned long h, h_0;
 
-	h = calcular_valor_do_hash(registro->name, table->capacity);
+	h = ht_hash_string(registro->name, table->capacity);
 	h_0 = h;
 	while (table->states[h] != OPEN)
 	{
 		if ((table->states[h] == OCCUPIED) && (strcmp(registro->name, table->items[h].name) == 0))
 		{
 			memcpy(registro, &table->items[h], sizeof(Registro_t));
-			return true;
+			return HT_SUCCESS;
 		}
 		h = (h + 1) % table->capacity;
 		// demos a volta na tabela e nao achamos, entao false
@@ -96,7 +138,7 @@ bool busca_na_tabela_hash(HashTable_t* table, Registro_t* registro)
 			break;
 		}
 	}
-	return false;
+	return HT_FAILURE;
 }
 
 bool apagar_da_tabela_hash(HashTable_t* table, Registro_t* registro)
@@ -108,7 +150,7 @@ bool apagar_da_tabela_hash(HashTable_t* table, Registro_t* registro)
 		return false;
 	}
 
-	h = calcular_valor_do_hash(registro->name, table->capacity);
+	h = ht_hash_string(registro->name, table->capacity);
 	h_0 = h;
 	while (table->states[h] != OPEN)
 	{
@@ -147,7 +189,7 @@ double densidade_da_tabela_hash(HashTable_t* table)
 	return ((double)registros_na_tabela_hash(table) / tamanho_da_tabela_hash(table));
 }
 
-bool expandir_tabela_hash(HashTable_t* table)
+bool ht_expand(HashTable_t* table)
 {
 	unsigned long novo_M, M_antigo;
 	unsigned short novo_N;
@@ -190,7 +232,7 @@ bool expandir_tabela_hash(HashTable_t* table)
 	{
 		if (estados_antigos[slot] == OCCUPIED)
 		{
-			inserir_na_tabela_hash(table, &chaves_antigas[slot]);
+			ht_insert(table, &chaves_antigas[slot]);
 		}
 	}
 
@@ -249,7 +291,7 @@ bool encolher_tabela_hash(HashTable_t* table)
 	{
 		if (estados_antigos[slot] == OCCUPIED)
 		{
-			inserir_na_tabela_hash(table, &chaves_antigas[slot]);
+			ht_insert(table, &chaves_antigas[slot]);
 		}
 	}
 
@@ -311,7 +353,7 @@ void ocupacao_da_tabela_hash(HashTable_t* table)
 			putchar('o');
 			break;
 		case OCCUPIED:
-			h = calcular_valor_do_hash(table->items[slot].name, table->capacity);
+			h = ht_hash_string(table->items[slot].name, table->capacity);
 			if (h == slot)
 			{
 				putchar('H');

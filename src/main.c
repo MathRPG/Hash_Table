@@ -8,7 +8,7 @@ int main()
 	HashTable_t tabela;
 	Registro_t p, q;
 
-	if (!criar_tabela_hash(&tabela))
+	if (!ht_init(&tabela))
 	{
 		printf("Erro na criacao da tabela\n");
 		exit(1);
@@ -19,7 +19,7 @@ int main()
 	strcpy(p.name, "Chicoh");
 	strcpy(p.email, "chicoh@ceu.org.br");
 
-	if (!inserir_na_tabela_hash(&tabela, &p))
+	if (!ht_insert(&tabela, &p))
 	{
 		printf("Falha na insercao\n");
 		exit(1);
@@ -32,7 +32,7 @@ int main()
 	strcpy(p.name, "Joao Grilo");
 	strcpy(p.email, "joaogrilo@ceu.org.br");
 
-	if (!inserir_na_tabela_hash(&tabela, &p))
+	if (!ht_insert(&tabela, &p))
 	{
 		printf("Falha na insercao\n");
 		exit(1);
@@ -45,7 +45,7 @@ int main()
 	strcpy(p.name, "Fernando");
 	strcpy(p.email, "fernando@andrade.org.br");
 
-	if (!inserir_na_tabela_hash(&tabela, &p))
+	if (!ht_insert(&tabela, &p))
 	{
 		printf("Falha na insercao\n");
 		exit(1);
@@ -56,7 +56,7 @@ int main()
 	}
 
 	// Inserir chave duplicada para produzir colisao
-	if (!inserir_na_tabela_hash(&tabela, &p))
+	if (!ht_insert(&tabela, &p))
 	{
 		printf("Falha na insercao\n");
 		exit(1);
@@ -70,7 +70,7 @@ int main()
 
 	// Recuperando uma chave que existe
 	strcpy(q.name, "Joao Grilo");
-	if (!busca_na_tabela_hash(&tabela, &q))
+	if (!ht_search(&tabela, &q))
 	{
 		printf("Erro na recuperacao\n");
 	}
@@ -81,7 +81,7 @@ int main()
 
 	// Recuperando uma chave que existe
 	strcpy(q.name, "Fernando");
-	if (!busca_na_tabela_hash(&tabela, &q))
+	if (!ht_search(&tabela, &q))
 	{
 		printf("Erro na recuperacao\n");
 	}
@@ -92,7 +92,7 @@ int main()
 
 	// Recuperando uma chave que nao existe
 	strcpy(q.name, "Raimundo Nonato");
-	if (!busca_na_tabela_hash(&tabela, &q))
+	if (!ht_search(&tabela, &q))
 	{
 		printf("Erro na recuperacao\n");
 	}
@@ -125,7 +125,7 @@ int main()
 
 	// Recuperando uma chave que existe
 	strcpy(q.name, "Fernando");
-	if (!busca_na_tabela_hash(&tabela, &q))
+	if (!ht_search(&tabela, &q))
 	{
 		printf("Erro na recuperacao\n");
 	}
@@ -148,11 +148,11 @@ int main()
 	ocupacao_da_tabela_hash(&tabela);
 
 	printf("Expandindo a tabela...\n");
-	expandir_tabela_hash(&tabela);
+	ht_expand(&tabela);
 
 	ocupacao_da_tabela_hash(&tabela);
 
-	if (destruir_tabela_hash(&tabela))
+	if (ht_clear(&tabela))
 	{
 		printf("Tabela destruida\n");
 	}

@@ -23,21 +23,26 @@ typedef struct hash_table
 	unsigned short N;
 } HashTable_t;
 
-bool criar_tabela_hash(HashTable_t* table);
-bool destruir_tabela_hash(HashTable_t* table);
-bool inserir_na_tabela_hash(HashTable_t* table, Registro_t* registro);
+static const int A = 31415;
+static const int B = 27183;
+static const double HT_HIGH_DENSITY = 0.75;
+static const bool HT_FAILURE = false;
+static const bool HT_SUCCESS = true;
+bool ht_init(HashTable_t* table);
+bool ht_clear(HashTable_t* table);
+bool ht_insert(HashTable_t* table, Registro_t* registro);
 bool apagar_da_tabela_hash(HashTable_t* table, Registro_t* registro);
-bool busca_na_tabela_hash(HashTable_t* table, Registro_t* registro);
+bool ht_search(HashTable_t* table, Registro_t* registro);
 
 void ocupacao_da_tabela_hash(HashTable_t* table);
 
 unsigned long tamanho_da_tabela_hash(HashTable_t* table);
 unsigned long registros_na_tabela_hash(HashTable_t* table);
 double densidade_da_tabela_hash(HashTable_t* table);
-bool expandir_tabela_hash(HashTable_t* table);
+bool ht_expand(HashTable_t* table);
 bool encolher_tabela_hash(HashTable_t* table);
 bool calcula_primo_proximo_2aN(unsigned short N, unsigned long* primo);
 
-unsigned long calcular_valor_do_hash(char* key, unsigned long M);
+unsigned long ht_hash_string(char* key, unsigned long table_capacity);
 
 #endif
