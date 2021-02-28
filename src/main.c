@@ -5,8 +5,8 @@
 
 int main()
 {
-	HASH tabela;
-	REGISTRO p, q;
+	HashTable_t tabela;
+	Registro_t p, q;
 
 	if (!criar_tabela_hash(&tabela))
 	{
@@ -16,7 +16,7 @@ int main()
 
 	ocupacao_da_tabela_hash(&tabela);
 
-	strcpy(p.nome, "Chicoh");
+	strcpy(p.name, "Chicoh");
 	strcpy(p.email, "chicoh@ceu.org.br");
 
 	if (!inserir_na_tabela_hash(&tabela, &p))
@@ -29,7 +29,7 @@ int main()
 		printf("Inserido\n");
 	}
 
-	strcpy(p.nome, "Joao Grilo");
+	strcpy(p.name, "Joao Grilo");
 	strcpy(p.email, "joaogrilo@ceu.org.br");
 
 	if (!inserir_na_tabela_hash(&tabela, &p))
@@ -42,7 +42,7 @@ int main()
 		printf("Inserido\n");
 	}
 
-	strcpy(p.nome, "Fernando");
+	strcpy(p.name, "Fernando");
 	strcpy(p.email, "fernando@andrade.org.br");
 
 	if (!inserir_na_tabela_hash(&tabela, &p))
@@ -69,80 +69,80 @@ int main()
 	ocupacao_da_tabela_hash(&tabela);
 
 	// Recuperando uma chave que existe
-	strcpy(q.nome, "Joao Grilo");
+	strcpy(q.name, "Joao Grilo");
 	if (!busca_na_tabela_hash(&tabela, &q))
 	{
 		printf("Erro na recuperacao\n");
 	}
 	else
 	{
-		printf("O email de %s eh %s\n", q.nome, q.email);
+		printf("O email de %s eh %s\n", q.name, q.email);
 	}
 
 	// Recuperando uma chave que existe
-	strcpy(q.nome, "Fernando");
+	strcpy(q.name, "Fernando");
 	if (!busca_na_tabela_hash(&tabela, &q))
 	{
 		printf("Erro na recuperacao\n");
 	}
 	else
 	{
-		printf("O email de %s eh %s\n", q.nome, q.email);
+		printf("O email de %s eh %s\n", q.name, q.email);
 	}
 
 	// Recuperando uma chave que nao existe
-	strcpy(q.nome, "Raimundo Nonato");
+	strcpy(q.name, "Raimundo Nonato");
 	if (!busca_na_tabela_hash(&tabela, &q))
 	{
 		printf("Erro na recuperacao\n");
 	}
 	else
 	{
-		printf("O email de %s eh %s\n", q.nome, q.email);
+		printf("O email de %s eh %s\n", q.name, q.email);
 	}
 
 	// Removendo uma chave que existe
-	strcpy(q.nome, "Chicoh");
+	strcpy(q.name, "Chicoh");
 	if (apagar_da_tabela_hash(&tabela, &q))
 	{
-		printf("%s removido\n", q.nome);
+		printf("%s removido\n", q.name);
 	}
 	else
 	{
-		printf("%s nao existe na tabela\n", q.nome);
+		printf("%s nao existe na tabela\n", q.name);
 	}
 
 	// Removendo uma chave que existe
-	strcpy(q.nome, "Fernando");
+	strcpy(q.name, "Fernando");
 	if (apagar_da_tabela_hash(&tabela, &q))
 	{
-		printf("%s removido\n", q.nome);
+		printf("%s removido\n", q.name);
 	}
 	else
 	{
-		printf("%s nao existe na tabela\n", q.nome);
+		printf("%s nao existe na tabela\n", q.name);
 	}
 
 	// Recuperando uma chave que existe
-	strcpy(q.nome, "Fernando");
+	strcpy(q.name, "Fernando");
 	if (!busca_na_tabela_hash(&tabela, &q))
 	{
 		printf("Erro na recuperacao\n");
 	}
 	else
 	{
-		printf("O email de %s eh %s\n", q.nome, q.email);
+		printf("O email de %s eh %s\n", q.name, q.email);
 	}
 
 	// Removendo uma chave que nao existe
-	strcpy(q.nome, "Raimundo Nonato");
+	strcpy(q.name, "Raimundo Nonato");
 	if (apagar_da_tabela_hash(&tabela, &q))
 	{
-		printf("%s removido\n", q.nome);
+		printf("%s removido\n", q.name);
 	}
 	else
 	{
-		printf("%s nao existe na tabela\n", q.nome);
+		printf("%s nao existe na tabela\n", q.name);
 	}
 
 	ocupacao_da_tabela_hash(&tabela);
