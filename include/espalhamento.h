@@ -18,7 +18,7 @@ typedef struct hash_table
 {
 	Registro_t* keys;
 	SlotState_t* states;
-	unsigned long size;
+	unsigned long tamanho;
 	unsigned long ocupados;
 	unsigned short N;
 } HashTable_t;

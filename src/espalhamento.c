@@ -14,15 +14,10 @@ Registro_t* allocate_registros(unsigned long initial_size)
 
 SlotState_t* allocate_slot_states(unsigned long initial_size)
 {
-	return (SlotState_t*)malloc(sizeof(SlotState_t) * initial_size);
-}
-
-bool criar_tabela_hash(HashTable_t* table)
-{
-	unsigned long initial_size;
+	unsigned long M;
 
 	// Inicia a tabela com espaco para 2^HASH_MIN_N - delta posicoes
-	if (!calcula_primo_proximo_2aN(HASH_MIN_N, &initial_size))
+	if (!calcula_primo_proximo_2aN(HASH_MIN_N, &M))
 	{
 		return false;
 	}
