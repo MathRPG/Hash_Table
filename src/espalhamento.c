@@ -9,32 +9,32 @@ static const unsigned short HASH_MAX_N = 50;
 
 bool criar_tabela_hash(HashTable_t* table)
 {
-	unsigned long M;
+	unsigned long initial_capacity;
 
 	// Inicia a tabela com espaco para 2^HASH_MIN_N - delta posicoes
-	if (!calcula_primo_proximo_2aN(HASH_MIN_N, &M))
+	if (!calcula_primo_proximo_2aN(HASH_MIN_N, &initial_capacity))
 	{
 		return false;
 	}
 
 	table->N = HASH_MIN_N;
-	table->tamanho = M;
-	table->keys = (Registro_t*)malloc(sizeof(Registro_t) * M);
-	table->states = (SlotState_t*)malloc(sizeof(SlotState_t) * M);
-	for (unsigned int slot = 0; slot < M; slot++)
+	table->capacity = initial_capacity;
+	table->items = (Registro_t*)malloc(sizeof(Registro_t) * initial_capacity);
+	table->states = (SlotState_t*)malloc(sizeof(SlotState_t) * initial_capacity);
+	for (unsigned int slot = 0; slot < initial_capacity; slot++)
 	{
 		table->states[slot] = OPEN;
 	}
-	table->ocupados = 0;
+	table->count = 0;
 	return true;
 }
 
 bool destruir_tabela_hash(HashTable_t* table)
 {
-	free(table->keys);
+	free(table->items);
 	free(table->states);
-	table->tamanho = 0;
-	table->ocupados = 0;
+	table->capacity = 0;
+	table->count = 0;
 	table->N = 0;
 	return true;
 }
@@ -58,21 +58,21 @@ bool inserir_na_tabela_hash(HashTable_t* table, Registro_t* registro)
 	if (densidade_da_tabela_hash(table) > 0.75)
 	{
 		// Se nao conseguir expandir e nao tiver mais espaco, aborta.
-		if (!expandir_tabela_hash(table) && (table->ocupados == table->tamanho))
+		if (!expandir_tabela_hash(table) && (table->count == table->capacity))
 		{
 			return false;
 		}
 	}
 
 	// A tabela tem espaco para insercao da chave
-	h = calcular_valor_do_hash(registro->name, table->tamanho);
+	h = calcular_valor_do_hash(registro->name, table->capacity);
 	while (table->states[h] == OCCUPIED)
 	{
-		h = (h + 1) % table->tamanho;
+		h = (h + 1) % table->capacity;
 	}
-	memcpy(&table->keys[h], registro, sizeof(Registro_t));
+	memcpy(&table->items[h], registro, sizeof(Registro_t));
 	table->states[h] = OCCUPIED;
-	table->ocupados++;
+	table->count++;
 	return true;
 }
 
@@ -80,16 +80,16 @@ bool busca_na_tabela_hash(HashTable_t* table, Registro_t* registro)
 {
 	unsigned long h, h_0;
 
-	h = calcular_valor_do_hash(registro->name, table->tamanho);
+	h = calcular_valor_do_hash(registro->name, table->capacity);
 	h_0 = h;
 	while (table->states[h] != OPEN)
 	{
-		if ((table->states[h] == OCCUPIED) && (strcmp(registro->name, table->keys[h].name) == 0))
+		if ((table->states[h] == OCCUPIED) && (strcmp(registro->name, table->items[h].name) == 0))
 		{
-			memcpy(registro, &table->keys[h], sizeof(Registro_t));
+			memcpy(registro, &table->items[h], sizeof(Registro_t));
 			return true;
 		}
-		h = (h + 1) % table->tamanho;
+		h = (h + 1) % table->capacity;
 		// demos a volta na tabela e nao achamos, entao false
 		if (h == h_0)
 		{
@@ -103,26 +103,26 @@ bool apagar_da_tabela_hash(HashTable_t* table, Registro_t* registro)
 {
 	unsigned long h, h_0;
 
-	if (table->ocupados == 0)
+	if (table->count == 0)
 	{
 		return false;
 	}
 
-	h = calcular_valor_do_hash(registro->name, table->tamanho);
+	h = calcular_valor_do_hash(registro->name, table->capacity);
 	h_0 = h;
 	while (table->states[h] != OPEN)
 	{
-		if ((table->states[h] == OCCUPIED) && (strcmp(registro->name, table->keys[h].name) == 0))
+		if ((table->states[h] == OCCUPIED) && (strcmp(registro->name, table->items[h].name) == 0))
 		{
 			table->states[h] = REMOVED;
-			table->ocupados--;
+			table->count--;
 			if (densidade_da_tabela_hash(table) < 0.25)
 			{
 				encolher_tabela_hash(table);
 			}
 			return true;
 		}
-		h = (h + 1) % table->tamanho;
+		h = (h + 1) % table->capacity;
 		// demos a volta na tabela e nao achamos, entao false
 		if (h == h_0)
 		{
@@ -134,12 +134,12 @@ bool apagar_da_tabela_hash(HashTable_t* table, Registro_t* registro)
 
 unsigned long tamanho_da_tabela_hash(HashTable_t* table)
 {
-	return (table->tamanho);
+	return (table->capacity);
 }
 
 unsigned long registros_na_tabela_hash(HashTable_t* table)
 {
-	return (table->ocupados);
+	return (table->count);
 }
 
 double densidade_da_tabela_hash(HashTable_t* table)
@@ -161,8 +161,8 @@ bool expandir_tabela_hash(HashTable_t* table)
 	}
 
 	// Guarda os componentes da tabela anterior
-	M_antigo = table->tamanho;
-	chaves_antigas = table->keys;
+	M_antigo = table->capacity;
+	chaves_antigas = table->items;
 	estados_antigos = table->states;
 
 	// Calcula e aloca componentes da tabela expandida
@@ -179,10 +179,10 @@ bool expandir_tabela_hash(HashTable_t* table)
 	}
 
 	// Tabela nova vazia
-	table->keys = novas_chaves;
+	table->items = novas_chaves;
 	table->states = novos_estados;
-	table->ocupados = 0;
-	table->tamanho = novo_M;
+	table->count = 0;
+	table->capacity = novo_M;
 	table->N = novo_N;
 
 	// percorrer a tabela antiga procurando chaves e inserindo na tabela nova
@@ -214,8 +214,8 @@ bool encolher_tabela_hash(HashTable_t* table)
 	}
 
 	// Guarda os componentes da tabela anterior
-	M_antigo = table->tamanho;
-	chaves_antigas = table->keys;
+	M_antigo = table->capacity;
+	chaves_antigas = table->items;
 	estados_antigos = table->states;
 
 	// Calcula e aloca componentes da tabela expandida
@@ -238,10 +238,10 @@ bool encolher_tabela_hash(HashTable_t* table)
 	}
 
 	// Tabela nova vazia
-	table->keys = novas_chaves;
+	table->items = novas_chaves;
 	table->states = novos_estados;
-	table->ocupados = 0;
-	table->tamanho = novo_M;
+	table->count = 0;
+	table->capacity = novo_M;
 	table->N = novo_N;
 
 	// percorrer a tabela antiga procurando chaves e inserindo na tabela nova
@@ -285,9 +285,9 @@ void ocupacao_da_tabela_hash(HashTable_t* table)
 {
 	unsigned long h;
 	printf("--- Ocupacao da tabela ---------------------------------------\n");
-	printf("Capacidade total.....: %10lu\n", table->tamanho);
+	printf("Capacidade total.....: %10lu\n", table->capacity);
 	printf("Valor de N...........: %10u\n", table->N);
-	printf("Slots ocupados (%%)...: %10lu (%.2f%%)\n", table->ocupados, densidade_da_tabela_hash(table));
+	printf("Slots ocupados (%%)...: %10lu (%.2f%%)\n", table->count, densidade_da_tabela_hash(table));
 	putchar('\n');
 	printf("(.) Posicao vazia\n");
 	printf("(o) Posicao vazia, mas que ja foi ocupada\n");
@@ -295,7 +295,7 @@ void ocupacao_da_tabela_hash(HashTable_t* table)
 	printf("(C) Posicao ocupada por registro relocado\n");
 	printf("-------------------------------------------------------------\n");
 	printf("           01234567890123456789012345678901234567890123456789");
-	for (unsigned long slot = 0; slot < table->tamanho; slot++)
+	for (unsigned long slot = 0; slot < table->capacity; slot++)
 	{
 		if (slot % 50 == 0)
 		{
@@ -311,7 +311,7 @@ void ocupacao_da_tabela_hash(HashTable_t* table)
 			putchar('o');
 			break;
 		case OCCUPIED:
-			h = calcular_valor_do_hash(table->keys[slot].name, table->tamanho);
+			h = calcular_valor_do_hash(table->items[slot].name, table->capacity);
 			if (h == slot)
 			{
 				putchar('H');

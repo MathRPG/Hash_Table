@@ -16,10 +16,10 @@ typedef enum
 
 typedef struct hash_table
 {
-	Registro_t* keys;
+	Registro_t* items;
 	SlotState_t* states;
-	unsigned long tamanho;
-	unsigned long ocupados;
+	unsigned long capacity;
+	unsigned long count;
 	unsigned short N;
 } HashTable_t;
 
