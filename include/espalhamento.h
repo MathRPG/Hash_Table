@@ -1,7 +1,3 @@
-//
-// Created by danie on 01/09/2020.
-//
-
 #ifndef ESPALHAMENTO_ESPALHAMENTO_H
 #define ESPALHAMENTO_ESPALHAMENTO_H
 
@@ -44,4 +40,4 @@ bool calcula_primo_proximo_2aN(unsigned short N, unsigned long* primo);
 
 unsigned long calcular_valor_do_hash(char* chave, unsigned long M);
 
-#endif //ESPALHAMENTO_ESPALHAMENTO_H
+#endif

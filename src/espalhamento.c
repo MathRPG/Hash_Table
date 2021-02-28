@@ -1,6 +1,3 @@
-//
-// Created by Daniel Lobato on 01/09/2020.
-//
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -119,7 +116,6 @@ bool apagar_da_tabela_hash(HASH* tabela, REGISTRO* registro)
 		{
 			tabela->estados[h] = REMOVIDO;
 			tabela->ocupados--;
-			// se densidade menor que 0.25, encolher tabela
 			if (densidade_da_tabela_hash(tabela) < 0.25)
 			{
 				encolher_tabela_hash(tabela);
@@ -159,7 +155,6 @@ bool expandir_tabela_hash(HASH* tabela)
 	REGISTRO* novas_chaves, * chaves_antigas;
 	EstadoDoSlot* novos_estados, * estados_antigos;
 
-	// Ja esta com o tamanho maximo. abortar
 	if (tabela->N == HASH_MAX_N)
 	{
 		return false;
@@ -199,7 +194,6 @@ bool expandir_tabela_hash(HASH* tabela)
 		}
 	}
 
-	// liberar os componentes da tabela antiga
 	free(chaves_antigas);
 	free(estados_antigos);
 
@@ -214,7 +208,6 @@ bool encolher_tabela_hash(HASH* tabela)
 	REGISTRO* novas_chaves, * chaves_antigas;
 	EstadoDoSlot* novos_estados, * estados_antigos;
 
-	// Ja esta com o tamanho minimo. abortar
 	if (tabela->N == HASH_MIN_N)
 	{
 		return false;
