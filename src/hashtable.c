@@ -1,7 +1,8 @@
+#include <stdlib.h>
+#include <stdbool.h>
+
 #include "article.h"
 #include "hashtable.h"
-
-#include <stdbool.h>
 
 typedef unsigned long ht_index_t;
 static const int HT_INITIAL_CAPACITY = 2;
@@ -53,6 +54,12 @@ void ht_insert(HashTable_t* ht, Article_t* article)
 		{
 			ht->items[i] = duplicate_article(article);
 			ht->count++;
+			return;
+		}
+		else if (articles_have_same_key(ht->items[i], article))
+		{
+			delete_article(ht->items[i]);
+			ht->items[i] = duplicate_article(article);
 			return;
 		}
 }

@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <assert.h>
 #include <stdbool.h>
 
@@ -142,6 +143,26 @@ void test_hash_table_multiple_articles()
 	ht_delete(ht);
 }
 
+void test_hash_table_insert_override_key()
+{
+	HashTable_t* ht = ht_create();
+	const char* repeat_key = "Repeat_DOI";
+	Article_t* first_version = make_article(repeat_key, "First_Title", "", 0);
+	Article_t* second_version = make_article(repeat_key, "Second_Title", "", 0);
+
+	// Inserting two articles with same key replaces the first version
+	ht_insert(ht, first_version);
+	ht_insert(ht, second_version);
+	assert(ht_count(ht) == 1);
+	const Article_t* fetched = ht_fetch(ht, repeat_key);
+	assert(articles_are_equal(second_version, fetched));
+	debug("Insertion override: inserting repeat key overrides old value");
+
+	delete_article(first_version);
+	delete_article(second_version);
+	ht_delete(ht);
+}
+
 void print_test_status()
 {
 	if (global_failure)
@@ -158,6 +179,7 @@ int main(void)
 	test_empty_hash_table();
 	test_hash_table_single_article();
 	test_hash_table_multiple_articles();
+	test_hash_table_insert_override_key();
 
 	global_failure = false;
 
