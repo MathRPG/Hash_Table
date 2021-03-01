@@ -11,7 +11,7 @@ typedef struct registro
 
 typedef enum
 {
-	OPEN, OCCUPIED, REMOVED
+	OPEN, FILLED, REMOVED
 } SlotState_t;
 
 typedef struct hash_table

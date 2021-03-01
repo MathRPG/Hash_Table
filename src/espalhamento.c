@@ -78,7 +78,7 @@ HT_STATUS_FLAG ht_remove_item(HashTable_t* table, Item_t* item)
 
 	while (table->states[candidate_index] != OPEN)
 	{
-		if ((table->states[candidate_index] == OCCUPIED) && str_eq(item->name, table->items[candidate_index].name))
+		if ((table->states[candidate_index] == FILLED) && str_eq(item->name, table->items[candidate_index].name))
 		{
 			table->states[candidate_index] = REMOVED;
 			table->count--;
@@ -105,7 +105,7 @@ HT_STATUS_FLAG ht_search(HashTable_t* table, Item_t* item)
 
 	while (table->states[candidate_index] != OPEN)
 	{
-		if ((table->states[candidate_index] == OCCUPIED) && (str_eq(item->name, table->items[candidate_index].name)))
+		if ((table->states[candidate_index] == FILLED) && (str_eq(item->name, table->items[candidate_index].name)))
 		{
 			memcpy(item, &table->items[candidate_index], sizeof(Item_t));
 			return HT_SUCCESS;
@@ -247,7 +247,7 @@ void ht_print(HashTable_t* table)
 		case REMOVED:
 			putchar('o');
 			break;
-		case OCCUPIED:
+		case FILLED:
 			h = ht_hash_string(table->items[slot].name, table->capacity);
 			putchar(h == slot ? 'H' : 'C');
 			break;
@@ -290,7 +290,7 @@ unsigned long find_cell_index_for_insertion(const HashTable_t* table, Item_t* it
 {
 	unsigned long candidate_cell_index = ht_hash_string(item->name, table->capacity);
 
-	while (table->states[candidate_cell_index] == OCCUPIED)
+	while (table->states[candidate_cell_index] == FILLED)
 		candidate_cell_index = (candidate_cell_index + 1) % table->capacity;
 
 	return candidate_cell_index;
@@ -299,7 +299,7 @@ unsigned long find_cell_index_for_insertion(const HashTable_t* table, Item_t* it
 void ht_insert_item_at_index(HashTable_t* table, const Item_t* item, const unsigned long cell_index)
 {
 	memcpy(&table->items[cell_index], item, sizeof(Item_t));
-	table->states[cell_index] = OCCUPIED;
+	table->states[cell_index] = FILLED;
 	table->count++;
 }
 
@@ -332,7 +332,7 @@ void transfer_items_between_tables(HashTable_t* table, unsigned long old_capacit
 		const SlotState_t* old_states)
 {
 	for (unsigned long slot = 0; slot < old_capacity; slot++)
-		if (old_states[slot] == OCCUPIED)
+		if (old_states[slot] == FILLED)
 			ht_insert(table, &old_items[slot]);
 }
 
