@@ -1,3 +1,4 @@
+#include <stdbool.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,6 +8,10 @@
 static const unsigned short HASH_MIN_N = 4;
 static const unsigned short HASH_MAX_N = 50;
 
+static const int A = 31415;
+static const int B = 27183;
+static const double HT_LOW_DENSITY = 0.25;
+static const double HT_HIGH_DENSITY = 0.75;
 Item_t* alloc_table_items(unsigned long initial_capacity)
 {
 	return (Item_t*)malloc(sizeof(Item_t) * initial_capacity);
