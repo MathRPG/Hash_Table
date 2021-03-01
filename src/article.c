@@ -1,6 +1,7 @@
 #include "article.h"
-#include "hashtable.h"
+
 #include <string.h>
+#include <stdlib.h>
 
 struct Article_s
 {

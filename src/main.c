@@ -2,7 +2,6 @@
 #include <assert.h>
 #include <stdbool.h>
 
-#include "article.h"
 #include "hashtable.h"
 
 int main(void)

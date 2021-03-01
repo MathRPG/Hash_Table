@@ -1,10 +1,10 @@
 #ifndef HASH_TABLE_H
 #define HASH_TABLE_H
 
+#include "article.h"
+
 #include <stdbool.h>
 #include <stdlib.h>
-
-#include "article.h"
 
 struct HashTable_s;
 typedef struct HashTable_s HashTable_t;
