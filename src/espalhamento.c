@@ -260,7 +260,7 @@ HT_STATUS_FLAG ht_shrink(HashTable_t* table)
 
 	if (table->N == HASH_MIN_N)
 	{
-		return false;
+		return HT_FAILURE;
 	}
 
 	// Guarda os componentes da tabela anterior
@@ -273,12 +273,12 @@ HT_STATUS_FLAG ht_shrink(HashTable_t* table)
 	// Ja estamos no menor tamanho?
 	if (!calcula_primo_proximo_2aN(novo_N, &novo_M))
 	{
-		return false;
+		return HT_FAILURE;
 	}
 	// Ha mais registros do que o numero de slots na nova tabela?
 	if (novo_M < table->count)
 	{
-		return false;
+		return HT_FAILURE;
 	}
 	novas_chaves = (Item_t*)malloc(sizeof(Item_t) * novo_M);
 	novos_estados = (SlotState_t*)malloc(sizeof(SlotState_t) * novo_M);
@@ -307,7 +307,7 @@ HT_STATUS_FLAG ht_shrink(HashTable_t* table)
 	free(chaves_antigas);
 	free(estados_antigos);
 
-	return true;
+	return HT_SUCCESS;
 }
 
 HT_STATUS_FLAG calcula_primo_proximo_2aN(unsigned short N, unsigned long* primo)
@@ -325,11 +325,11 @@ HT_STATUS_FLAG calcula_primo_proximo_2aN(unsigned short N, unsigned long* primo)
 
 	if ((N < HASH_MIN_N) || (N > HASH_MAX_N))
 	{
-		return false;
+		return HT_FAILURE;
 	}
 
-	*primo = (((unsigned long) 1) << N) - deltas[N - HASH_MIN_N];
-	return true;
+	*primo = (((unsigned long)1) << N) - deltas[N - HASH_MIN_N];
+	return HT_SUCCESS;
 }
 
 void ht_print(HashTable_t* table)
