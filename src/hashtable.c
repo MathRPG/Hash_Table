@@ -5,7 +5,7 @@
 #include "hashtable.h"
 
 typedef unsigned long ht_index_t;
-static const int HT_INITIAL_CAPACITY = 2;
+static const int HT_INITIAL_CAPACITY = 13;
 
 typedef enum HashTableCellState CellState_t;
 
@@ -54,6 +54,21 @@ void ht_delete(HashTable_t* const ht)
 bool ht_is_empty(const HashTable_t* const ht)
 {
 	return ht->count == 0;
+}
+
+static unsigned long const HASH_FUNCTION_A = 31415, HASH_FUNCTION_B = 27183;
+
+ht_index_t ht_hash_key(const HashTable_t* const ht, const char* key)
+{
+	ht_index_t candidate_index = 0, multiplier = HASH_FUNCTION_A;
+
+	for (; *key != '\0'; ++key)
+	{
+		candidate_index = (multiplier * candidate_index + *key) % ht->capacity;
+		multiplier = (multiplier * HASH_FUNCTION_B) % (ht->capacity - 1);
+	}
+
+	return candidate_index;
 }
 
 bool cell_at_index_has_key(const HashTable_t* ht, const ht_index_t i, const char* const key)
