@@ -14,5 +14,6 @@ void ht_delete(HashTable_t* ht);
 bool ht_is_empty(HashTable_t* ht);
 bool ht_contains(HashTable_t* ht, const char* string);
 void ht_insert(HashTable_t* ht, Article_t* article);
+unsigned long ht_count(HashTable_t* ht);
 
 #endif //HASH_TABLE_H
