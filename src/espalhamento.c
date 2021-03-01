@@ -30,7 +30,7 @@ void init_table_states(HashTable_t* table, unsigned long initial_capacity)
 	}
 }
 
-const bool ht_init(HashTable_t* table)
+HT_STATUS_FLAG ht_init(HashTable_t* table)
 {
 	unsigned long initial_capacity;
 
@@ -51,7 +51,7 @@ const bool ht_init(HashTable_t* table)
 	return HT_SUCCESS;
 }
 
-const bool ht_clear(HashTable_t* table)
+HT_STATUS_FLAG ht_clear(HashTable_t* table)
 {
 	free(table->items);
 	free(table->states);
@@ -108,7 +108,7 @@ unsigned long find_cell_index_for_insertion(const HashTable_t* table, Item_t* re
 	return candidate_cell_index;
 }
 
-const bool ht_insert(HashTable_t* table, Item_t* item)
+HT_STATUS_FLAG ht_insert(HashTable_t* table, Item_t* item)
 {
 	if (ht_has_high_density(table))
 	{
@@ -134,7 +134,7 @@ unsigned long next_candidate_index(const HashTable_t* table, unsigned long candi
 	return (candidate_index + 1) % table->capacity;
 }
 
-const bool ht_search(HashTable_t* table, Item_t* item)
+HT_STATUS_FLAG ht_search(HashTable_t* table, Item_t* item)
 {
 	unsigned long candidate_index = ht_hash_string(item->name, table->capacity);
 	const unsigned long initial_guess = candidate_index;
@@ -163,7 +163,7 @@ bool ht_has_low_density(HashTable_t* table)
 	return ht_density(table) < HT_LOW_DENSITY;
 }
 
-const bool ht_remove_item(HashTable_t* table, Item_t* item)
+HT_STATUS_FLAG ht_remove_item(HashTable_t* table, Item_t* item)
 {
 	if (table->count == 0)
 	{
@@ -204,7 +204,7 @@ double ht_density(HashTable_t* table)
 	return (double)table->count / (double)table->capacity;
 }
 
-const bool ht_expand(HashTable_t* table)
+HT_STATUS_FLAG ht_expand(HashTable_t* table)
 {
 	if (table->N == HASH_MAX_N)
 	{
@@ -248,7 +248,7 @@ const bool ht_expand(HashTable_t* table)
 	return HT_SUCCESS;
 }
 
-const bool ht_shrink(HashTable_t* table)
+HT_STATUS_FLAG ht_shrink(HashTable_t* table)
 {
 	unsigned long novo_M, M_antigo;
 	unsigned short novo_N;
@@ -308,7 +308,7 @@ const bool ht_shrink(HashTable_t* table)
 	return true;
 }
 
-const bool calcula_primo_proximo_2aN(unsigned short N, unsigned long* primo)
+HT_STATUS_FLAG calcula_primo_proximo_2aN(unsigned short N, unsigned long* primo)
 {
 	// https://primes.utm.edu/lists/2small/0bit.html
 	// https://en.wikipedia.org/wiki/List_of_prime_numbers
