@@ -1,14 +1,16 @@
+#include <stdbool.h>
 #include "article.h"
 
 #include <string.h>
 #include <stdlib.h>
-#include <stdio.h>
+
+#define MAX_STR_FIELD_LEN 32
 
 struct Article_s
 {
-	char doi[32];
-	char title[32];
-	char author[32];
+	char doi[MAX_STR_FIELD_LEN];
+	char title[MAX_STR_FIELD_LEN];
+	char author[MAX_STR_FIELD_LEN];
 	unsigned year;
 };
 
@@ -36,11 +38,11 @@ bool strings_equal_up_to(const char* str_a, const char* str_b, const unsigned le
 
 bool articles_are_equal(const Article_t* const a, const Article_t* const b)
 {
-	if (!strings_equal_up_to(a->doi, b->doi, 32))
+	if (!strings_equal_up_to(a->doi, b->doi, MAX_STR_FIELD_LEN))
 		return false;
-	if (!strings_equal_up_to(a->title, b->title, 32))
+	if (!strings_equal_up_to(a->title, b->title, MAX_STR_FIELD_LEN))
 		return false;
-	if (!strings_equal_up_to(a->author, b->author, 32))
+	if (!strings_equal_up_to(a->author, b->author, MAX_STR_FIELD_LEN))
 		return false;
 	if (a->year != b->year)
 		return false;
@@ -49,8 +51,13 @@ bool articles_are_equal(const Article_t* const a, const Article_t* const b)
 
 void copy_article(Article_t* dest, Article_t* origin)
 {
-	strncpy(dest->doi, origin->doi, 32);
-	strncpy(dest->title, origin->title, 32);
-	strncpy(dest->author, origin->author, 32);
+	strncpy(dest->doi, origin->doi, MAX_STR_FIELD_LEN);
+	strncpy(dest->title, origin->title, MAX_STR_FIELD_LEN);
+	strncpy(dest->author, origin->author, MAX_STR_FIELD_LEN);
 	dest->year = origin->year;
+}
+
+bool article_has_key(const Article_t* article, const char* key)
+{
+	return strings_equal_up_to(article->doi, key, MAX_STR_FIELD_LEN);
 }

@@ -45,5 +45,5 @@ unsigned long ht_count(HashTable_t* ht)
 
 const Article_t* ht_fetch(HashTable_t* const ht, const char* const key)
 {
-	return ht->article;
+	return article_has_key(ht->article, key) ? ht->article : NULL;
 }

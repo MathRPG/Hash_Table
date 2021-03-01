@@ -10,5 +10,6 @@ Article_t* make_article(const char* doi, const char* title, const char* author, 
 void delete_article(Article_t* a);
 bool articles_are_equal(const Article_t* a, const Article_t* b);
 void copy_article(Article_t* dest, Article_t* origin);
+bool article_has_key(const Article_t* article, const char* key);
 
 #endif //ARTICLE_H
