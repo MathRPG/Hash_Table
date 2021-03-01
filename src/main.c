@@ -6,7 +6,7 @@
 int main()
 {
 	HashTable_t tabela;
-	Registro_t p, q;
+	Item_t p, q;
 
 	if (!ht_init(&tabela))
 	{
@@ -103,7 +103,7 @@ int main()
 
 	// Removendo uma chave que existe
 	strcpy(q.name, "Chicoh");
-	if (apagar_da_tabela_hash(&tabela, &q))
+	if (ht_remove_item(&tabela, &q))
 	{
 		printf("%s removido\n", q.name);
 	}
@@ -114,7 +114,7 @@ int main()
 
 	// Removendo uma chave que existe
 	strcpy(q.name, "Fernando");
-	if (apagar_da_tabela_hash(&tabela, &q))
+	if (ht_remove_item(&tabela, &q))
 	{
 		printf("%s removido\n", q.name);
 	}
@@ -136,7 +136,7 @@ int main()
 
 	// Removendo uma chave que nao existe
 	strcpy(q.name, "Raimundo Nonato");
-	if (apagar_da_tabela_hash(&tabela, &q))
+	if (ht_remove_item(&tabela, &q))
 	{
 		printf("%s removido\n", q.name);
 	}
