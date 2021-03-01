@@ -5,6 +5,13 @@
 #include "article.h"
 #include "hashtable.h"
 
+bool global_failure;
+
+void debug(const char* message)
+{
+	puts(message);
+}
+
 void test_empty_hash_table()
 {
 	/*
@@ -12,18 +19,20 @@ void test_empty_hash_table()
 	 * Initial values - not null, is_empty, count
 	 * Operations - contains, fetch, remove
 	 */
-	
-	HashTable_t * const ht = ht_create();
+
+	HashTable_t* const ht = ht_create();
 	const char* some_doi = "Some_DOI";
 
 	// Initial values
 	assert(ht != NULL);
 	assert(ht_is_empty(ht) == true);
 	assert(ht_count(ht) == 0);
+	debug("Empty table: initial values");
 
 	// All searches must yield 'failure'
 	assert(ht_contains(ht, some_doi) == false);
 	assert(ht_fetch(ht, some_doi) == NULL);
+	debug("Empty table: queries fail");
 
 	// Remove must maintain table intact
 	ht_remove(ht, some_doi);
@@ -31,6 +40,7 @@ void test_empty_hash_table()
 	assert(ht_count(ht) == 0);
 	assert(ht_contains(ht, some_doi) == false);
 	assert(ht_fetch(ht, some_doi) == NULL);
+	debug("Empty table: remove does nothing");
 
 	// Cleanup
 	ht_delete(ht);
@@ -54,23 +64,29 @@ void test_hash_table_single_article()
 	// Should not be empty after one insertion
 	assert(ht_is_empty(ht) == false);
 	assert(ht_count(ht) == 1);
+	debug("One value in table: properties are correct");
 
 	// Queries must yield success for inserted key
 	assert(ht_contains(ht, inserted_key) == true);
 	const Article_t* fetched = ht_fetch(ht, inserted_key);
 	assert(fetched != NULL);
 	assert(articles_are_equal(a, fetched) == true);
+	debug("One value in table: query success");
 
 	// Queries must yield failure for not-inserted key
 	assert(ht_contains(ht, not_inserted_key) == false);
 	assert(ht_fetch(ht, not_inserted_key) == NULL);
+	debug("One value in table: query failure");
 
 	// Remove of not-inserted key must maintain table intact
 	ht_remove(ht, not_inserted_key);
 	assert(ht_is_empty(ht) == false);
 	assert(ht_count(ht) == 1);
 	assert(ht_contains(ht, inserted_key) == true);
-	assert(ht_fetch(ht, inserted_key) != NULL);
+	fetched = ht_fetch(ht, inserted_key);
+	assert(fetched != NULL);
+	assert(articles_are_equal(a, fetched) == true);
+	debug("One value table: useless remove keeps table intact");
 
 	// Remove of inserted key must regress table back to being empty
 	ht_remove(ht, inserted_key);
@@ -78,6 +94,7 @@ void test_hash_table_single_article()
 	assert(ht_count(ht) == 0);
 	assert(ht_contains(ht, inserted_key) == false);
 	assert(ht_fetch(ht, inserted_key) == NULL);
+	debug("One value table: remove empties table");
 
 	// Cleanup
 	delete_article(a);
@@ -86,16 +103,63 @@ void test_hash_table_single_article()
 
 void test_hash_table_multiple_articles()
 {
+	HashTable_t* ht = ht_create();
+	const char* key_one = "DOI_one";
+	const char* key_two = "DOI_two";
+	Article_t* article_one = make_article(key_one, "", "", 0);
+	Article_t* article_two = make_article(key_two, "", "", 0);
 
+	ht_insert(ht, article_one);
+	ht_insert(ht, article_two);
+
+	assert(ht_count(ht) == 2);
+	debug("Two value table: properties are correct");
+
+	// Remove key_one keeps key_two in table
+	ht_remove(ht, key_one);
+	assert(ht_is_empty(ht) == false);
+	assert(ht_count(ht) == 1);
+	assert(ht_contains(ht, key_two) == true);
+	const Article_t* fetched = ht_fetch(ht, key_two);
+	assert(fetched != NULL);
+	assert(articles_are_equal(article_two, fetched));
+	debug("Two value table: Removing key_one keeps key_two");
+
+	ht_insert(ht, article_one);
+
+	// Remove key_two keeps key_one in table
+	ht_remove(ht, key_two);
+	assert(ht_is_empty(ht) == false);
+	assert(ht_count(ht) == 1);
+	assert(ht_contains(ht, key_one) == true);
+	fetched = ht_fetch(ht, key_one);
+	assert(fetched != NULL);
+	assert(articles_are_equal(article_one, fetched));
+	debug("Two value table: Removing key_two keeps key_one");
+
+	delete_article(article_one);
+	delete_article(article_two);
+	ht_delete(ht);
+}
+
+void print_test_status()
+{
+	if (global_failure)
+		printf("❌ Tests Failed!");
+	else
+		printf("✔ All Tests Passed!");
 }
 
 int main(void)
 {
+	global_failure = true;
+	atexit(print_test_status);
+
 	test_empty_hash_table();
 	test_hash_table_single_article();
 	test_hash_table_multiple_articles();
 
-	printf("✔ All Tests Passed!");
+	global_failure = false;
 
 	return 0;
 }

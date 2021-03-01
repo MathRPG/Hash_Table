@@ -49,15 +49,19 @@ bool articles_are_equal(const Article_t* const a, const Article_t* const b)
 	return true;
 }
 
-void copy_article(Article_t* dest, Article_t* origin)
-{
-	strncpy(dest->doi, origin->doi, MAX_STR_FIELD_LEN);
-	strncpy(dest->title, origin->title, MAX_STR_FIELD_LEN);
-	strncpy(dest->author, origin->author, MAX_STR_FIELD_LEN);
-	dest->year = origin->year;
-}
-
 bool article_has_key(const Article_t* article, const char* key)
 {
 	return strings_equal_up_to(article->doi, key, MAX_STR_FIELD_LEN);
+}
+
+Article_t* duplicate_article(const Article_t* original)
+{
+	Article_t* const copy = (Article_t*)malloc(sizeof(Article_t));
+
+	strncpy(copy->doi, original->doi, MAX_STR_FIELD_LEN);
+	strncpy(copy->title, original->title, MAX_STR_FIELD_LEN);
+	strncpy(copy->author, original->author, MAX_STR_FIELD_LEN);
+	copy->year = original->year;
+
+	return copy;
 }
