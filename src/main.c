@@ -7,11 +7,11 @@
 
 int main(void)
 {
-	struct HashTable* ht = ht_create(5lu);
+	HashTable_t* ht = ht_create(5lu);
 
 	assert(ht != NULL);
 
-	struct Article a = { "DOI", "Title", "Author", 2000 };
+	Article_t* a = make_article("DOI", "Title", "Author", 2000u);
 
 	assert(ht_is_empty(ht) == true);
 	assert(ht_contains(ht, "DOI") == false);
@@ -20,6 +20,7 @@ int main(void)
 
 	assert(ht_contains(ht, "DOI") == true);
 
+	delete_article(a);
 	ht_delete(ht);
 
 	printf("✔ All Tests Passed!");

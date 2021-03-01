@@ -6,13 +6,13 @@
 
 #include "article.h"
 
-struct HashTable;
-typedef struct HashTable HashTable;
+struct HashTable_s;
+typedef struct HashTable_s HashTable_t;
 
-HashTable* ht_create(unsigned long i);
-void ht_delete(HashTable* ht);
-bool ht_is_empty(HashTable* ht);
-bool ht_contains(HashTable* ht, const char* string);
-void ht_insert(HashTable* ht, struct Article article);
+HashTable_t* ht_create(unsigned long i);
+void ht_delete(HashTable_t* ht);
+bool ht_is_empty(HashTable_t* ht);
+bool ht_contains(HashTable_t* ht, const char* string);
+void ht_insert(HashTable_t* ht, Article_t* article);
 
 #endif //HASH_TABLE_H
