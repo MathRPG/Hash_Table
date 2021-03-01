@@ -6,15 +6,19 @@
 struct HashTable_s
 {
 	unsigned long count;
+	Article_t* article;
 };
 
-HashTable_t* ht_create(unsigned long i)
+HashTable_t* ht_create(void)
 {
-	return (HashTable_t*)calloc(1, sizeof(HashTable_t));
+	HashTable_t* new_table = (HashTable_t*)calloc(1, sizeof(HashTable_t));
+	new_table->article = make_article("", "", "", 0);
+	return new_table;
 }
 
 void ht_delete(HashTable_t* ht)
 {
+	delete_article(ht->article);
 	free(ht);
 }
 
@@ -30,10 +34,16 @@ bool ht_contains(HashTable_t* ht, const char* string)
 
 void ht_insert(HashTable_t* ht, Article_t* article)
 {
+	copy_article(ht->article, article);
 	ht->count++;
 }
 
 unsigned long ht_count(HashTable_t* ht)
 {
 	return ht->count;
+}
+
+const Article_t* ht_fetch(HashTable_t* const ht, const char* const key)
+{
+	return ht->article;
 }
