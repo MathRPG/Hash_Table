@@ -166,9 +166,16 @@ void test_hash_table_insert_override_key()
 void print_test_status()
 {
 	if (global_failure)
+	{
+		printf("\033[1;31m");
 		printf("❌ Tests Failed!");
+	}
 	else
+	{
+		printf("\033[1;32m");
 		printf("✔ All Tests Passed!");
+	}
+	printf("\033[0m");
 }
 
 int main(void)
