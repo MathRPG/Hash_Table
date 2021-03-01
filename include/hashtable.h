@@ -9,11 +9,11 @@ typedef struct HashTable_s HashTable_t;
 
 HashTable_t* ht_create(void);
 void ht_delete(HashTable_t* ht);
-bool ht_is_empty(HashTable_t* ht);
-bool ht_contains(HashTable_t* ht, const char* key);
-void ht_insert(HashTable_t* ht, Article_t* article);
-unsigned long ht_count(HashTable_t* ht);
-const Article_t* ht_fetch(HashTable_t* ht, const char* key);
+bool ht_is_empty(const HashTable_t* ht);
+bool ht_contains(const HashTable_t* ht, const char* key);
+void ht_insert(HashTable_t* ht, const Article_t* article);
+unsigned long ht_count(const HashTable_t* ht);
+const Article_t* ht_fetch(const HashTable_t* ht, const char* key);
 void ht_remove(HashTable_t* ht, const char* key);
 
 #endif //HASH_TABLE_H
