@@ -33,13 +33,13 @@ HT_STATUS_FLAG ht_insert(HashTable_t* table, Item_t* item);
 HT_STATUS_FLAG ht_remove_item(HashTable_t* table, Item_t* item);
 HT_STATUS_FLAG ht_search(HashTable_t* table, Item_t* item);
 
-void ht_print(HashTable_t* table);
-
 double ht_density(HashTable_t* table);
 HT_STATUS_FLAG ht_expand(HashTable_t* table);
 HT_STATUS_FLAG ht_shrink(HashTable_t* table);
 HT_STATUS_FLAG ht_get_appropriate_capacity_from_capacity_exponent(unsigned short capacity_exponent, unsigned long* prime_capacity);
 
 unsigned long ht_hash_string(char* key, unsigned long table_capacity);
+
+void ht_print(HashTable_t* table);
 
 #endif

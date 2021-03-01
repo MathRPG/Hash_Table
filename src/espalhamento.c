@@ -14,25 +14,9 @@ static const int B = 27183;
 static const double HT_LOW_DENSITY = 0.25;
 static const double HT_HIGH_DENSITY = 0.75;
 
-void transfer_items_between_tables(HashTable_t* table, unsigned long old_capacity, Item_t* old_items,
-		const SlotState_t* old_states);
-void init_new_table(HashTable_t* table, unsigned long new_capacity, int new_capacity_exponent);
-bool is_valid_capacity_exponent(unsigned short capacity_exponent);
-Item_t* alloc_table_items(unsigned long initial_capacity)
-{
-	return (Item_t*)malloc(sizeof(Item_t) * initial_capacity);
-}
-
-SlotState_t* alloc_table_states(unsigned long initial_capacity)
-{
-	return (SlotState_t*)malloc(sizeof(SlotState_t) * initial_capacity);
-}
-
-void init_table_states_as_open(HashTable_t* table, unsigned long initial_capacity)
-{
-	for (unsigned int slot = 0; slot < initial_capacity; slot++)
-		table->states[slot] = OPEN;
-}
+Item_t* alloc_table_items(unsigned long initial_capacity);
+SlotState_t* alloc_table_states(unsigned long initial_capacity);
+void init_table_states_as_open(HashTable_t* table, unsigned long initial_capacity);
 
 HT_STATUS_FLAG ht_init(HashTable_t* table)
 {
@@ -63,50 +47,10 @@ HT_STATUS_FLAG ht_clear(HashTable_t* table)
 	return HT_SUCCESS;
 }
 
-unsigned long ht_hash_string(char* key, unsigned long table_capacity)
-{
-	unsigned long total = 0, a = A;
-
-	for (; *key != '\0'; key++)
-	{
-		total = (a * total + *key) % table_capacity;
-		a = (a * B) % (table_capacity - 1);
-	}
-
-	return total;
-}
-
-bool ht_has_high_density(HashTable_t* table)
-{
-	return ht_density(table) > HT_HIGH_DENSITY;
-}
-
-bool ht_has_available_space(const HashTable_t* table)
-{
-	return table->count != table->capacity;
-}
-
-bool ht_attempt_expansion(HashTable_t* table)
-{
-	return (ht_expand(table) || ht_has_available_space(table));
-}
-
-void ht_insert_item_at_index(HashTable_t* table, const Item_t* item, const unsigned long cell_index)
-{
-	memcpy(&table->items[cell_index], item, sizeof(Item_t));
-	table->states[cell_index] = OCCUPIED;
-	table->count++;
-}
-
-unsigned long find_cell_index_for_insertion(const HashTable_t* table, Item_t* registro)
-{
-	unsigned long candidate_cell_index = ht_hash_string(registro->name, table->capacity);
-
-	while (table->states[candidate_cell_index] == OCCUPIED)
-		candidate_cell_index = (candidate_cell_index + 1) % table->capacity;
-
-	return candidate_cell_index;
-}
+bool ht_has_high_density(HashTable_t* table);
+bool ht_attempt_expansion(HashTable_t* table);
+unsigned long find_cell_index_for_insertion(const HashTable_t* table, Item_t* registro);
+void ht_insert_item_at_index(HashTable_t* table, const Item_t* item, unsigned long cell_index);
 
 HT_STATUS_FLAG ht_insert(HashTable_t* table, Item_t* item)
 {
@@ -120,42 +64,9 @@ HT_STATUS_FLAG ht_insert(HashTable_t* table, Item_t* item)
 	return HT_SUCCESS;
 }
 
-bool str_eq(const char* str1, const char* str2)
-{
-	return strcmp(str1, str2) == 0;
-}
-
-unsigned long next_candidate_index(const HashTable_t* table, unsigned long candidate_index)
-{
-	return (candidate_index + 1) % table->capacity;
-}
-
-HT_STATUS_FLAG ht_search(HashTable_t* table, Item_t* item)
-{
-	unsigned long candidate_index = ht_hash_string(item->name, table->capacity);
-	const unsigned long initial_guess = candidate_index;
-
-	while (table->states[candidate_index] != OPEN)
-	{
-		if ((table->states[candidate_index] == OCCUPIED) && (str_eq(item->name, table->items[candidate_index].name)))
-		{
-			memcpy(item, &table->items[candidate_index], sizeof(Item_t));
-			return HT_SUCCESS;
-		}
-
-		candidate_index = next_candidate_index(table, candidate_index);
-
-		if (candidate_index == initial_guess)
-			return HT_FAILURE;
-	}
-
-	return HT_FAILURE;
-}
-
-bool ht_has_low_density(HashTable_t* table)
-{
-	return ht_density(table) < HT_LOW_DENSITY;
-}
+bool str_eq(const char* str1, const char* str2);
+bool ht_has_low_density(HashTable_t* table);
+unsigned long next_candidate_index(const HashTable_t* table, unsigned long candidate_index);
 
 HT_STATUS_FLAG ht_remove_item(HashTable_t* table, Item_t* item)
 {
@@ -187,10 +98,36 @@ HT_STATUS_FLAG ht_remove_item(HashTable_t* table, Item_t* item)
 	return HT_FAILURE;
 }
 
+HT_STATUS_FLAG ht_search(HashTable_t* table, Item_t* item)
+{
+	unsigned long candidate_index = ht_hash_string(item->name, table->capacity);
+	const unsigned long initial_guess = candidate_index;
+
+	while (table->states[candidate_index] != OPEN)
+	{
+		if ((table->states[candidate_index] == OCCUPIED) && (str_eq(item->name, table->items[candidate_index].name)))
+		{
+			memcpy(item, &table->items[candidate_index], sizeof(Item_t));
+			return HT_SUCCESS;
+		}
+
+		candidate_index = next_candidate_index(table, candidate_index);
+
+		if (candidate_index == initial_guess)
+			return HT_FAILURE;
+	}
+
+	return HT_FAILURE;
+}
+
 double ht_density(HashTable_t* table)
 {
 	return (double)table->count / (double)table->capacity;
 }
+
+void init_new_table(HashTable_t* table, unsigned long new_capacity, int new_capacity_exponent);
+void transfer_items_between_tables(HashTable_t* table, unsigned long old_capacity, Item_t* old_items,
+		const SlotState_t* old_states);
 
 HT_STATUS_FLAG ht_expand(HashTable_t* table)
 {
@@ -216,24 +153,6 @@ HT_STATUS_FLAG ht_expand(HashTable_t* table)
 	free(old_states);
 
 	return HT_SUCCESS;
-}
-
-void init_new_table(HashTable_t* table, unsigned long new_capacity, int new_capacity_exponent)
-{
-	table->states = alloc_table_states(new_capacity);
-	init_table_states_as_open(table, new_capacity);
-	table->items = alloc_table_items(new_capacity);
-	table->count = 0;
-	table->capacity = new_capacity;
-	table->capacity_exponent = new_capacity_exponent;
-}
-
-void transfer_items_between_tables(HashTable_t* table, unsigned long old_capacity, Item_t* old_items,
-		const SlotState_t* old_states)
-{
-	for (unsigned long slot = 0; slot < old_capacity; slot++)
-		if (old_states[slot] == OCCUPIED)
-			ht_insert(table, &old_items[slot]);
 }
 
 HT_STATUS_FLAG ht_shrink(HashTable_t* table)
@@ -263,6 +182,8 @@ HT_STATUS_FLAG ht_shrink(HashTable_t* table)
 	return HT_SUCCESS;
 }
 
+bool is_valid_capacity_exponent(unsigned short capacity_exponent);
+
 HT_STATUS_FLAG ht_get_appropriate_capacity_from_capacity_exponent(
 		unsigned short capacity_exponent, unsigned long* prime_capacity)
 {
@@ -286,9 +207,17 @@ HT_STATUS_FLAG ht_get_appropriate_capacity_from_capacity_exponent(
 	return HT_SUCCESS;
 }
 
-bool is_valid_capacity_exponent(unsigned short capacity_exponent)
+unsigned long ht_hash_string(char* key, unsigned long table_capacity)
 {
-	return (HASH_MIN_CAPACITY_EXPONENT <= capacity_exponent && capacity_exponent <= HASH_MAX_CAPACITY_EXPONENT);
+	unsigned long total = 0, a = A;
+
+	for (; *key != '\0'; key++)
+	{
+		total = (a * total + *key) % table_capacity;
+		a = (a * B) % (table_capacity - 1);
+	}
+
+	return total;
 }
 
 void ht_print(HashTable_t* table)
@@ -329,6 +258,94 @@ void ht_print(HashTable_t* table)
 	putchar('\n');
 	printf("           01234567890123456789012345678901234567890123456789\n");
 	printf("-------------------------------------------------------------\n");
+}
+
+Item_t* alloc_table_items(unsigned long initial_capacity)
+{
+	return (Item_t*)malloc(sizeof(Item_t) * initial_capacity);
+}
+
+SlotState_t* alloc_table_states(unsigned long initial_capacity)
+{
+	return (SlotState_t*)malloc(sizeof(SlotState_t) * initial_capacity);
+}
+
+void init_table_states_as_open(HashTable_t* table, unsigned long initial_capacity)
+{
+	for (unsigned int slot = 0; slot < initial_capacity; slot++)
+		table->states[slot] = OPEN;
+}
+
+bool ht_has_high_density(HashTable_t* table)
+{
+	return ht_density(table) > HT_HIGH_DENSITY;
+}
+
+bool ht_has_available_space(const HashTable_t* table);
+
+bool ht_attempt_expansion(HashTable_t* table)
+{
+	return (ht_expand(table) || ht_has_available_space(table));
+}
+
+unsigned long find_cell_index_for_insertion(const HashTable_t* table, Item_t* registro)
+{
+	unsigned long candidate_cell_index = ht_hash_string(registro->name, table->capacity);
+
+	while (table->states[candidate_cell_index] == OCCUPIED)
+		candidate_cell_index = (candidate_cell_index + 1) % table->capacity;
+
+	return candidate_cell_index;
+}
+
+void ht_insert_item_at_index(HashTable_t* table, const Item_t* item, const unsigned long cell_index)
+{
+	memcpy(&table->items[cell_index], item, sizeof(Item_t));
+	table->states[cell_index] = OCCUPIED;
+	table->count++;
+}
+
+bool str_eq(const char* str1, const char* str2)
+{
+	return strcmp(str1, str2) == 0;
+}
+
+bool ht_has_low_density(HashTable_t* table)
+{
+	return ht_density(table) < HT_LOW_DENSITY;
+}
+
+unsigned long next_candidate_index(const HashTable_t* table, unsigned long candidate_index)
+{
+	return (candidate_index + 1) % table->capacity;
+}
+
+void init_new_table(HashTable_t* table, unsigned long new_capacity, int new_capacity_exponent)
+{
+	table->states = alloc_table_states(new_capacity);
+	init_table_states_as_open(table, new_capacity);
+	table->items = alloc_table_items(new_capacity);
+	table->count = 0;
+	table->capacity = new_capacity;
+	table->capacity_exponent = new_capacity_exponent;
+}
+
+void transfer_items_between_tables(HashTable_t* table, unsigned long old_capacity, Item_t* old_items,
+		const SlotState_t* old_states)
+{
+	for (unsigned long slot = 0; slot < old_capacity; slot++)
+		if (old_states[slot] == OCCUPIED)
+			ht_insert(table, &old_items[slot]);
+}
+
+bool is_valid_capacity_exponent(unsigned short capacity_exponent)
+{
+	return (HASH_MIN_CAPACITY_EXPONENT <= capacity_exponent && capacity_exponent <= HASH_MAX_CAPACITY_EXPONENT);
+}
+
+bool ht_has_available_space(const HashTable_t* table)
+{
+	return table->count != table->capacity;
 }
 
 
