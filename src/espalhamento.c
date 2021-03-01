@@ -17,6 +17,7 @@ static const double HT_HIGH_DENSITY = 0.75;
 void transfer_items_between_tables(HashTable_t* table, unsigned long old_capacity, Item_t* old_items,
 		const SlotState_t* old_states);
 void init_new_table(HashTable_t* table, unsigned long new_capacity, int new_capacity_exponent);
+bool is_valid_capacity_exponent(unsigned short capacity_exponent);
 Item_t* alloc_table_items(unsigned long initial_capacity)
 {
 	return (Item_t*)malloc(sizeof(Item_t) * initial_capacity);
@@ -262,7 +263,8 @@ HT_STATUS_FLAG ht_shrink(HashTable_t* table)
 	return HT_SUCCESS;
 }
 
-HT_STATUS_FLAG ht_get_appropriate_capacity_from_capacity_exponent(unsigned short N, unsigned long* prime_capacity)
+HT_STATUS_FLAG ht_get_appropriate_capacity_from_capacity_exponent(
+		unsigned short capacity_exponent, unsigned long* prime_capacity)
 {
 	// https://primes.utm.edu/lists/2small/0bit.html
 	// https://en.wikipedia.org/wiki/List_of_prime_numbers
@@ -275,11 +277,18 @@ HT_STATUS_FLAG ht_get_appropriate_capacity_from_capacity_exponent(unsigned short
 			1, 5, 9, 41, 31, 5, 25, 45, 7, 87,
 			21, 11, 57, 17, 55, 21, 115, 59, 81, 27 };
 
-	if ((N < HASH_MIN_CAPACITY_EXPONENT) || (N > HASH_MAX_CAPACITY_EXPONENT))
+	if (!is_valid_capacity_exponent(capacity_exponent))
 		return HT_FAILURE;
 
-	*prime_capacity = (((unsigned long)1) << N) - deltas[N - HASH_MIN_CAPACITY_EXPONENT];
+	*prime_capacity =
+			(((unsigned long)1) << capacity_exponent) - deltas[capacity_exponent - HASH_MIN_CAPACITY_EXPONENT];
+
 	return HT_SUCCESS;
+}
+
+bool is_valid_capacity_exponent(unsigned short capacity_exponent)
+{
+	return (HASH_MIN_CAPACITY_EXPONENT <= capacity_exponent && capacity_exponent <= HASH_MAX_CAPACITY_EXPONENT);
 }
 
 void ht_print(HashTable_t* table)
