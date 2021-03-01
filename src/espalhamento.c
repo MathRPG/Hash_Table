@@ -216,6 +216,7 @@ HT_STATUS_FLAG ht_expand(HashTable_t* table)
 
 	return HT_SUCCESS;
 }
+
 void init_new_table(HashTable_t* table, unsigned long new_capacity)
 {
 	table->states = alloc_table_states(new_capacity);
@@ -225,6 +226,7 @@ void init_new_table(HashTable_t* table, unsigned long new_capacity)
 	table->capacity = new_capacity;
 	table->capacity_exponent = table->capacity_exponent + 1;
 }
+
 void transfer_items_between_tables(HashTable_t* table, unsigned long old_capacity, Item_t* old_items,
 		const SlotState_t* old_states)
 {
@@ -235,53 +237,49 @@ void transfer_items_between_tables(HashTable_t* table, unsigned long old_capacit
 
 HT_STATUS_FLAG ht_shrink(HashTable_t* table)
 {
-	unsigned long novo_M, M_antigo;
-	unsigned short novo_N;
-
-	Item_t* novas_chaves, * chaves_antigas;
-	SlotState_t* novos_estados, * estados_antigos;
-
 	if (table->capacity_exponent == HASH_MIN_CAPACITY_EXPONENT)
 		return HT_FAILURE;
 
 	// Guarda os componentes da tabela anterior
-	M_antigo = table->capacity;
-	chaves_antigas = table->items;
-	estados_antigos = table->states;
+	unsigned long old_capacity = table->capacity;
+	Item_t* old_items = table->items;
+	SlotState_t* old_states = table->states;
 
 	// Calcula e aloca componentes da tabela expandida
-	novo_N = table->capacity_exponent - 1;
-	// Ja estamos no menor tamanho?
-	if (ht_get_appropriate_capacity_from_capacity_exponent(novo_N, &novo_M) == HT_FAILURE)
+	unsigned long new_capacity;
+	if (ht_get_appropriate_capacity_from_capacity_exponent(
+			table->capacity_exponent - 1, &new_capacity) == HT_FAILURE)
 		return HT_FAILURE;
-	// Ha mais registros do que o numero de slots na nova tabela?
-	if (novo_M < table->count)
+
+	if (new_capacity < table->count)
 		return HT_FAILURE;
-	novas_chaves = (Item_t*)malloc(sizeof(Item_t) * novo_M);
-	novos_estados = (SlotState_t*)malloc(sizeof(SlotState_t) * novo_M);
-	for (unsigned int slot = 0; slot < novo_M; slot++)
-		novos_estados[slot] = OPEN;
+
+	Item_t* new_items = (Item_t*)malloc(sizeof(Item_t) * new_capacity);
+	SlotState_t* new_states = (SlotState_t*)malloc(sizeof(SlotState_t) * new_capacity);
+
+	for (unsigned int slot = 0; slot < new_capacity; slot++)
+		new_states[slot] = OPEN;
 
 	// Tabela nova vazia
-	table->items = novas_chaves;
-	table->states = novos_estados;
+	table->items = new_items;
+	table->states = new_states;
 	table->count = 0;
-	table->capacity = novo_M;
-	table->capacity_exponent = novo_N;
+	table->capacity = new_capacity;
+	table->capacity_exponent = table->capacity_exponent - 1;
 
 	// percorrer a tabela antiga procurando chaves e inserindo na tabela nova
-	for (unsigned long slot = 0; slot < M_antigo; slot++)
-		if (estados_antigos[slot] == OCCUPIED)
-			ht_insert(table, &chaves_antigas[slot]);
+	for (unsigned long slot = 0; slot < old_capacity; slot++)
+		if (old_states[slot] == OCCUPIED)
+			ht_insert(table, &old_items[slot]);
 
 	// liberar os componentes da tabela antiga
-	free(chaves_antigas);
-	free(estados_antigos);
+	free(old_items);
+	free(old_states);
 
 	return HT_SUCCESS;
 }
 
-HT_STATUS_FLAG ht_get_appropriate_capacity_from_capacity_exponent(unsigned short N, unsigned long* primo)
+HT_STATUS_FLAG ht_get_appropriate_capacity_from_capacity_exponent(unsigned short N, unsigned long* prime_capacity)
 {
 	// https://primes.utm.edu/lists/2small/0bit.html
 	// https://en.wikipedia.org/wiki/List_of_prime_numbers
@@ -297,7 +295,7 @@ HT_STATUS_FLAG ht_get_appropriate_capacity_from_capacity_exponent(unsigned short
 	if ((N < HASH_MIN_CAPACITY_EXPONENT) || (N > HASH_MAX_CAPACITY_EXPONENT))
 		return HT_FAILURE;
 
-	*primo = (((unsigned long)1) << N) - deltas[N - HASH_MIN_CAPACITY_EXPONENT];
+	*prime_capacity = (((unsigned long)1) << N) - deltas[N - HASH_MIN_CAPACITY_EXPONENT];
 	return HT_SUCCESS;
 }
 
