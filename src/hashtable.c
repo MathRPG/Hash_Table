@@ -54,6 +54,8 @@ const Article_t* ht_fetch(HashTable_t* const ht, const char* const key)
 
 void ht_remove(HashTable_t* ht, const char* key)
 {
+	if (ht->count == 0)
+		return;
 	if (article_has_key(ht->article, key))
 		ht->count--;
 }
