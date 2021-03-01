@@ -16,7 +16,7 @@ static const double HT_HIGH_DENSITY = 0.75;
 
 void transfer_items_between_tables(HashTable_t* table, unsigned long old_capacity, Item_t* old_items,
 		const SlotState_t* old_states);
-void init_new_table(HashTable_t* table, unsigned long new_capacity);
+void init_new_table(HashTable_t* table, unsigned long new_capacity, int new_capacity_exponent);
 Item_t* alloc_table_items(unsigned long initial_capacity)
 {
 	return (Item_t*)malloc(sizeof(Item_t) * initial_capacity);
@@ -207,7 +207,7 @@ HT_STATUS_FLAG ht_expand(HashTable_t* table)
 			table->capacity_exponent + 1, &new_capacity) == HT_FAILURE)
 		return HT_FAILURE;
 
-	init_new_table(table, new_capacity);
+	init_new_table(table, new_capacity, table->capacity_exponent + 1);
 
 	transfer_items_between_tables(table, old_capacity, old_items, old_states);
 
@@ -217,14 +217,14 @@ HT_STATUS_FLAG ht_expand(HashTable_t* table)
 	return HT_SUCCESS;
 }
 
-void init_new_table(HashTable_t* table, unsigned long new_capacity)
+void init_new_table(HashTable_t* table, unsigned long new_capacity, int new_capacity_exponent)
 {
 	table->states = alloc_table_states(new_capacity);
 	init_table_states_as_open(table, new_capacity);
 	table->items = alloc_table_items(new_capacity);
 	table->count = 0;
 	table->capacity = new_capacity;
-	table->capacity_exponent = table->capacity_exponent + 1;
+	table->capacity_exponent = new_capacity_exponent;
 }
 
 void transfer_items_between_tables(HashTable_t* table, unsigned long old_capacity, Item_t* old_items,
@@ -240,12 +240,10 @@ HT_STATUS_FLAG ht_shrink(HashTable_t* table)
 	if (table->capacity_exponent == HASH_MIN_CAPACITY_EXPONENT)
 		return HT_FAILURE;
 
-	// Guarda os componentes da tabela anterior
 	unsigned long old_capacity = table->capacity;
 	Item_t* old_items = table->items;
 	SlotState_t* old_states = table->states;
 
-	// Calcula e aloca componentes da tabela expandida
 	unsigned long new_capacity;
 	if (ht_get_appropriate_capacity_from_capacity_exponent(
 			table->capacity_exponent - 1, &new_capacity) == HT_FAILURE)
@@ -254,25 +252,10 @@ HT_STATUS_FLAG ht_shrink(HashTable_t* table)
 	if (new_capacity < table->count)
 		return HT_FAILURE;
 
-	Item_t* new_items = (Item_t*)malloc(sizeof(Item_t) * new_capacity);
-	SlotState_t* new_states = (SlotState_t*)malloc(sizeof(SlotState_t) * new_capacity);
+	init_new_table(table, new_capacity, table->capacity_exponent - 1);
 
-	for (unsigned int slot = 0; slot < new_capacity; slot++)
-		new_states[slot] = OPEN;
+	transfer_items_between_tables(table, old_capacity, old_items, old_states);
 
-	// Tabela nova vazia
-	table->items = new_items;
-	table->states = new_states;
-	table->count = 0;
-	table->capacity = new_capacity;
-	table->capacity_exponent = table->capacity_exponent - 1;
-
-	// percorrer a tabela antiga procurando chaves e inserindo na tabela nova
-	for (unsigned long slot = 0; slot < old_capacity; slot++)
-		if (old_states[slot] == OCCUPIED)
-			ht_insert(table, &old_items[slot]);
-
-	// liberar os componentes da tabela antiga
 	free(old_items);
 	free(old_states);
 
