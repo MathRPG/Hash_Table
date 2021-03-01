@@ -5,43 +5,62 @@
 #include "article.h"
 #include "hashtable.h"
 
-int main(void)
+void test_hash_table_single_article()
 {
 	HashTable_t* const ht = ht_create();
-	const char* const first_doi = "DOI";
-	const char* const second_doi = "Other_DOI";
+	const char* const doi = "DOI";
+	const char* const other_doi = "Other_DOI";
 
+	// Properties of an empty ht
 	assert(ht != NULL);
 	assert(ht_is_empty(ht) == true);
 	assert(ht_count(ht) == 0);
-	assert(ht_contains(ht, first_doi) == false);
+	// All searches must yield failure
+	assert(ht_contains(ht, doi) == false);
+	assert(ht_fetch(ht, doi) == NULL);
 
-	Article_t* a = make_article(first_doi, "Title", "Author", 2000u);
+	// Testing inserting one article
+	Article_t* a = make_article(doi, "Title", "Author", 2000u);
 	ht_insert(ht, a);
 
 	assert(ht_is_empty(ht) == false);
 	assert(ht_count(ht) == 1);
-	assert(ht_contains(ht, first_doi) == true);
 
-	const Article_t* fetched = ht_fetch(ht, first_doi);
-
+	// Search for inserted
+	assert(ht_contains(ht, doi) == true);
+	const Article_t* fetched = ht_fetch(ht, doi);
 	assert(fetched != NULL);
 	assert(articles_are_equal(a, fetched) == true);
 
-	const Article_t* new_fetched = ht_fetch(ht, second_doi);
+	// Search for non-inserted
+	assert(ht_contains(ht, other_doi) == false);
+	assert(ht_fetch(ht, other_doi) == NULL);
 
-	assert(new_fetched == NULL);
+	// Testing removal of non-existent value
+	ht_remove(ht, other_doi);
 
-//	Article_t* b = make_article(second_doi, "Title", "Author", 2000u);
-//	ht_insert(ht, b);
-//
-//	assert(ht_is_empty(ht) == false);
-//	assert(ht_count(ht) == 2);
-//	assert(ht_contains(ht, second_doi) == true);
+	assert(ht_is_empty(ht) == false);
+	assert(ht_count(ht) == 1);
+
+	assert(ht_contains(ht, doi) == true);
+	assert(ht_fetch(ht, doi) != NULL);
+
+	// Testing removal of value inserted
+	ht_remove(ht, doi);
+
+	assert(ht_is_empty(ht) == true);
+	assert(ht_count(ht) == 0);
+
+	assert(ht_contains(ht, doi) == false);
+	assert(ht_fetch(ht, doi) == NULL);
 
 	delete_article(a);
-//	delete_article(b);
 	ht_delete(ht);
+}
+
+int main(void)
+{
+	test_hash_table_single_article();
 
 	printf("✔ All Tests Passed!");
 
