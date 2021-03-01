@@ -49,7 +49,7 @@ HT_STATUS_FLAG ht_clear(HashTable_t* table)
 
 bool ht_has_high_density(HashTable_t* table);
 bool ht_attempt_expansion(HashTable_t* table);
-unsigned long find_cell_index_for_insertion(const HashTable_t* table, Item_t* registro);
+unsigned long find_cell_index_for_insertion(const HashTable_t* table, Item_t* item);
 void ht_insert_item_at_index(HashTable_t* table, const Item_t* item, unsigned long cell_index);
 
 HT_STATUS_FLAG ht_insert(HashTable_t* table, Item_t* item)
@@ -138,9 +138,7 @@ HT_STATUS_FLAG ht_expand(HashTable_t* table)
 	Item_t* old_items = table->items;
 	SlotState_t* old_states = table->states;
 
-	// Calcula e aloca componentes da tabela expandida
 	unsigned long new_capacity;
-
 	if (ht_get_appropriate_capacity_from_capacity_exponent(
 			table->capacity_exponent + 1, &new_capacity) == HT_FAILURE)
 		return HT_FAILURE;
@@ -288,9 +286,9 @@ bool ht_attempt_expansion(HashTable_t* table)
 	return (ht_expand(table) || ht_has_available_space(table));
 }
 
-unsigned long find_cell_index_for_insertion(const HashTable_t* table, Item_t* registro)
+unsigned long find_cell_index_for_insertion(const HashTable_t* table, Item_t* item)
 {
-	unsigned long candidate_cell_index = ht_hash_string(registro->name, table->capacity);
+	unsigned long candidate_cell_index = ht_hash_string(item->name, table->capacity);
 
 	while (table->states[candidate_cell_index] == OCCUPIED)
 		candidate_cell_index = (candidate_cell_index + 1) % table->capacity;
@@ -347,6 +345,3 @@ bool ht_has_available_space(const HashTable_t* table)
 {
 	return table->count != table->capacity;
 }
-
-
-
