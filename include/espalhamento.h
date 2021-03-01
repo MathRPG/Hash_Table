@@ -20,7 +20,7 @@ typedef struct hash_table
 	SlotState_t* states;
 	unsigned long capacity;
 	unsigned long count;
-	unsigned short N;
+	unsigned short capacity_exponent;
 } HashTable_t;
 
 typedef int HT_STATUS_FLAG;
@@ -38,7 +38,7 @@ void ht_print(HashTable_t* table);
 double ht_density(HashTable_t* table);
 HT_STATUS_FLAG ht_expand(HashTable_t* table);
 HT_STATUS_FLAG ht_shrink(HashTable_t* table);
-HT_STATUS_FLAG calcula_primo_proximo_2aN(unsigned short N, unsigned long* primo);
+HT_STATUS_FLAG ht_get_appropriate_capacity_from_capacity_exponent(unsigned short N, unsigned long* primo);
 
 unsigned long ht_hash_string(char* key, unsigned long table_capacity);
 

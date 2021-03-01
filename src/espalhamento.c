@@ -5,8 +5,8 @@
 
 #include "../include/espalhamento.h"
 
-static const unsigned short HASH_MIN_N = 4;
-static const unsigned short HASH_MAX_N = 50;
+static const unsigned short HASH_MIN_CAPACITY_EXPONENT = 4;
+static const unsigned short HASH_MAX_CAPACITY_EXPONENT = 50;
 
 static const int A = 31415;
 static const int B = 27183;
@@ -24,12 +24,10 @@ SlotState_t* alloc_table_states(unsigned long initial_capacity)
 	return (SlotState_t*)malloc(sizeof(SlotState_t) * initial_capacity);
 }
 
-void init_table_states(HashTable_t* table, unsigned long initial_capacity)
+void init_table_states_as_open(HashTable_t* table, unsigned long initial_capacity)
 {
 	for (unsigned int slot = 0; slot < initial_capacity; slot++)
-	{
 		table->states[slot] = OPEN;
-	}
 }
 
 HT_STATUS_FLAG ht_init(HashTable_t* table)
@@ -37,17 +35,17 @@ HT_STATUS_FLAG ht_init(HashTable_t* table)
 	unsigned long initial_capacity;
 
 	// Inicia a tabela com espaco para 2^HASH_MIN_N - delta posicoes
-	if (!calcula_primo_proximo_2aN(HASH_MIN_N, &initial_capacity))
+	if (!ht_get_appropriate_capacity_from_capacity_exponent(HASH_MIN_CAPACITY_EXPONENT, &initial_capacity))
 	{
 		return HT_FAILURE;
 	}
 
-	table->N = HASH_MIN_N;
+	table->capacity_exponent = HASH_MIN_CAPACITY_EXPONENT;
 	table->capacity = initial_capacity;
 	table->items = alloc_table_items(initial_capacity);
 
 	table->states = alloc_table_states(initial_capacity);
-	init_table_states(table, initial_capacity);
+	init_table_states_as_open(table, initial_capacity);
 
 	table->count = 0;
 	return HT_SUCCESS;
@@ -59,7 +57,7 @@ HT_STATUS_FLAG ht_clear(HashTable_t* table)
 	free(table->states);
 	table->capacity = 0;
 	table->count = 0;
-	table->N = 0;
+	table->capacity_exponent = 0;
 	return HT_SUCCESS;
 }
 
@@ -208,7 +206,7 @@ double ht_density(HashTable_t* table)
 
 HT_STATUS_FLAG ht_expand(HashTable_t* table)
 {
-	if (table->N == HASH_MAX_N)
+	if (table->capacity_exponent == HASH_MAX_CAPACITY_EXPONENT)
 	{
 		return HT_FAILURE;
 	}
@@ -219,21 +217,21 @@ HT_STATUS_FLAG ht_expand(HashTable_t* table)
 	SlotState_t* old_states = table->states;
 
 	// Calcula e aloca componentes da tabela expandida
-	unsigned short new_N = table->N + 1;
+	unsigned short new_N = table->capacity_exponent + 1;
 
 	unsigned long new_capacity;
 
-	if (!calcula_primo_proximo_2aN(new_N, &new_capacity))
+	if (!ht_get_appropriate_capacity_from_capacity_exponent(new_N, &new_capacity))
 	{
 		return HT_FAILURE;
 	}
 
 	table->states = alloc_table_states(new_capacity);
-	init_table_states(table, new_capacity);
+	init_table_states_as_open(table, new_capacity);
 	table->items = alloc_table_items(new_capacity);
 	table->count = 0;
 	table->capacity = new_capacity;
-	table->N = new_N;
+	table->capacity_exponent = new_N;
 
 	// percorrer a tabela antiga procurando chaves e inserindo na tabela nova
 	for (unsigned long slot = 0; slot < old_capacity; slot++)
@@ -258,7 +256,7 @@ HT_STATUS_FLAG ht_shrink(HashTable_t* table)
 	Item_t* novas_chaves, * chaves_antigas;
 	SlotState_t* novos_estados, * estados_antigos;
 
-	if (table->N == HASH_MIN_N)
+	if (table->capacity_exponent == HASH_MIN_CAPACITY_EXPONENT)
 	{
 		return HT_FAILURE;
 	}
@@ -269,9 +267,9 @@ HT_STATUS_FLAG ht_shrink(HashTable_t* table)
 	estados_antigos = table->states;
 
 	// Calcula e aloca componentes da tabela expandida
-	novo_N = table->N - 1;
+	novo_N = table->capacity_exponent - 1;
 	// Ja estamos no menor tamanho?
-	if (!calcula_primo_proximo_2aN(novo_N, &novo_M))
+	if (!ht_get_appropriate_capacity_from_capacity_exponent(novo_N, &novo_M))
 	{
 		return HT_FAILURE;
 	}
@@ -292,7 +290,7 @@ HT_STATUS_FLAG ht_shrink(HashTable_t* table)
 	table->states = novos_estados;
 	table->count = 0;
 	table->capacity = novo_M;
-	table->N = novo_N;
+	table->capacity_exponent = novo_N;
 
 	// percorrer a tabela antiga procurando chaves e inserindo na tabela nova
 	for (unsigned long slot = 0; slot < M_antigo; slot++)
@@ -310,7 +308,7 @@ HT_STATUS_FLAG ht_shrink(HashTable_t* table)
 	return HT_SUCCESS;
 }
 
-HT_STATUS_FLAG calcula_primo_proximo_2aN(unsigned short N, unsigned long* primo)
+HT_STATUS_FLAG ht_get_appropriate_capacity_from_capacity_exponent(unsigned short N, unsigned long* primo)
 {
 	// https://primes.utm.edu/lists/2small/0bit.html
 	// https://en.wikipedia.org/wiki/List_of_prime_numbers
@@ -323,12 +321,12 @@ HT_STATUS_FLAG calcula_primo_proximo_2aN(unsigned short N, unsigned long* primo)
 			1, 5, 9, 41, 31, 5, 25, 45, 7, 87,
 			21, 11, 57, 17, 55, 21, 115, 59, 81, 27 };
 
-	if ((N < HASH_MIN_N) || (N > HASH_MAX_N))
+	if ((N < HASH_MIN_CAPACITY_EXPONENT) || (N > HASH_MAX_CAPACITY_EXPONENT))
 	{
 		return HT_FAILURE;
 	}
 
-	*primo = (((unsigned long)1) << N) - deltas[N - HASH_MIN_N];
+	*primo = (((unsigned long)1) << N) - deltas[N - HASH_MIN_CAPACITY_EXPONENT];
 	return HT_SUCCESS;
 }
 
@@ -337,7 +335,7 @@ void ht_print(HashTable_t* table)
 	unsigned long h;
 	printf("--- Ocupacao da tabela ---------------------------------------\n");
 	printf("Capacidade total.....: %10lu\n", table->capacity);
-	printf("Valor de N...........: %10u\n", table->N);
+	printf("Valor de N...........: %10u\n", table->capacity_exponent);
 	printf("Slots ocupados (%%)...: %10lu (%.2f%%)\n", table->count, ht_density(table));
 	putchar('\n');
 	printf("(.) Posicao vazia\n");
