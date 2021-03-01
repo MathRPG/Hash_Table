@@ -35,10 +35,9 @@ HT_STATUS_FLAG ht_init(HashTable_t* table)
 	unsigned long initial_capacity;
 
 	// Inicia a tabela com espaco para 2^HASH_MIN_N - delta posicoes
-	if (!ht_get_appropriate_capacity_from_capacity_exponent(HASH_MIN_CAPACITY_EXPONENT, &initial_capacity))
-	{
+	if (ht_get_appropriate_capacity_from_capacity_exponent(
+			HASH_MIN_CAPACITY_EXPONENT, &initial_capacity) == HT_FAILURE)
 		return HT_FAILURE;
-	}
 
 	table->capacity_exponent = HASH_MIN_CAPACITY_EXPONENT;
 	table->capacity = initial_capacity;
@@ -101,9 +100,7 @@ unsigned long find_cell_index_for_insertion(const HashTable_t* table, Item_t* re
 	unsigned long candidate_cell_index = ht_hash_string(registro->name, table->capacity);
 
 	while (table->states[candidate_cell_index] == OCCUPIED)
-	{
 		candidate_cell_index = (candidate_cell_index + 1) % table->capacity;
-	}
 
 	return candidate_cell_index;
 }
@@ -111,12 +108,8 @@ unsigned long find_cell_index_for_insertion(const HashTable_t* table, Item_t* re
 HT_STATUS_FLAG ht_insert(HashTable_t* table, Item_t* item)
 {
 	if (ht_has_high_density(table))
-	{
-		if (!ht_attempt_expansion(table)) // TODO: more explicit comparison
-		{
+		if (ht_attempt_expansion(table) == HT_FAILURE) // TODO: more explicit comparison
 			return HT_FAILURE;
-		}
-	}
 
 	const unsigned long cell_index = find_cell_index_for_insertion(table, item);
 	ht_insert_item_at_index(table, item, cell_index);
@@ -150,9 +143,7 @@ HT_STATUS_FLAG ht_search(HashTable_t* table, Item_t* item)
 		candidate_index = next_candidate_index(table, candidate_index);
 
 		if (candidate_index == initial_guess)
-		{
 			return HT_FAILURE;
-		}
 	}
 
 	return HT_FAILURE;
@@ -166,9 +157,7 @@ bool ht_has_low_density(HashTable_t* table)
 HT_STATUS_FLAG ht_remove_item(HashTable_t* table, Item_t* item)
 {
 	if (table->count == 0)
-	{
 		return HT_FAILURE;
-	}
 
 	unsigned long candidate_index = ht_hash_string(item->name, table->capacity);
 	const unsigned long initial_guess = candidate_index;
@@ -181,9 +170,7 @@ HT_STATUS_FLAG ht_remove_item(HashTable_t* table, Item_t* item)
 			table->count--;
 
 			if (ht_has_low_density(table))
-			{
 				ht_shrink(table);
-			}
 
 			return HT_SUCCESS;
 		}
@@ -191,9 +178,7 @@ HT_STATUS_FLAG ht_remove_item(HashTable_t* table, Item_t* item)
 		candidate_index = next_candidate_index(table, candidate_index);
 
 		if (candidate_index == initial_guess)
-		{
 			return HT_FAILURE;
-		}
 	}
 
 	return HT_FAILURE;
@@ -207,9 +192,7 @@ double ht_density(HashTable_t* table)
 HT_STATUS_FLAG ht_expand(HashTable_t* table)
 {
 	if (table->capacity_exponent == HASH_MAX_CAPACITY_EXPONENT)
-	{
 		return HT_FAILURE;
-	}
 
 	// Guarda os componentes da tabela anterior
 	unsigned long old_capacity = table->capacity;
@@ -221,10 +204,8 @@ HT_STATUS_FLAG ht_expand(HashTable_t* table)
 
 	unsigned long new_capacity;
 
-	if (!ht_get_appropriate_capacity_from_capacity_exponent(new_N, &new_capacity))
-	{
+	if (ht_get_appropriate_capacity_from_capacity_exponent(new_N, &new_capacity) == HT_FAILURE)
 		return HT_FAILURE;
-	}
 
 	table->states = alloc_table_states(new_capacity);
 	init_table_states_as_open(table, new_capacity);
@@ -235,12 +216,8 @@ HT_STATUS_FLAG ht_expand(HashTable_t* table)
 
 	// percorrer a tabela antiga procurando chaves e inserindo na tabela nova
 	for (unsigned long slot = 0; slot < old_capacity; slot++)
-	{
 		if (old_states[slot] == OCCUPIED)
-		{
 			ht_insert(table, &old_items[slot]);
-		}
-	}
 
 	free(old_items);
 	free(old_states);
@@ -257,9 +234,7 @@ HT_STATUS_FLAG ht_shrink(HashTable_t* table)
 	SlotState_t* novos_estados, * estados_antigos;
 
 	if (table->capacity_exponent == HASH_MIN_CAPACITY_EXPONENT)
-	{
 		return HT_FAILURE;
-	}
 
 	// Guarda os componentes da tabela anterior
 	M_antigo = table->capacity;
@@ -269,21 +244,15 @@ HT_STATUS_FLAG ht_shrink(HashTable_t* table)
 	// Calcula e aloca componentes da tabela expandida
 	novo_N = table->capacity_exponent - 1;
 	// Ja estamos no menor tamanho?
-	if (!ht_get_appropriate_capacity_from_capacity_exponent(novo_N, &novo_M))
-	{
+	if (ht_get_appropriate_capacity_from_capacity_exponent(novo_N, &novo_M) == HT_FAILURE)
 		return HT_FAILURE;
-	}
 	// Ha mais registros do que o numero de slots na nova tabela?
 	if (novo_M < table->count)
-	{
 		return HT_FAILURE;
-	}
 	novas_chaves = (Item_t*)malloc(sizeof(Item_t) * novo_M);
 	novos_estados = (SlotState_t*)malloc(sizeof(SlotState_t) * novo_M);
 	for (unsigned int slot = 0; slot < novo_M; slot++)
-	{
 		novos_estados[slot] = OPEN;
-	}
 
 	// Tabela nova vazia
 	table->items = novas_chaves;
@@ -294,12 +263,8 @@ HT_STATUS_FLAG ht_shrink(HashTable_t* table)
 
 	// percorrer a tabela antiga procurando chaves e inserindo na tabela nova
 	for (unsigned long slot = 0; slot < M_antigo; slot++)
-	{
 		if (estados_antigos[slot] == OCCUPIED)
-		{
 			ht_insert(table, &chaves_antigas[slot]);
-		}
-	}
 
 	// liberar os componentes da tabela antiga
 	free(chaves_antigas);
@@ -322,9 +287,7 @@ HT_STATUS_FLAG ht_get_appropriate_capacity_from_capacity_exponent(unsigned short
 			21, 11, 57, 17, 55, 21, 115, 59, 81, 27 };
 
 	if ((N < HASH_MIN_CAPACITY_EXPONENT) || (N > HASH_MAX_CAPACITY_EXPONENT))
-	{
 		return HT_FAILURE;
-	}
 
 	*primo = (((unsigned long)1) << N) - deltas[N - HASH_MIN_CAPACITY_EXPONENT];
 	return HT_SUCCESS;
@@ -361,14 +324,7 @@ void ht_print(HashTable_t* table)
 			break;
 		case OCCUPIED:
 			h = ht_hash_string(table->items[slot].name, table->capacity);
-			if (h == slot)
-			{
-				putchar('H');
-			}
-			else
-			{
-				putchar('C');
-			}
+			putchar(h == slot ? 'H' : 'C');
 			break;
 		}
 	}
