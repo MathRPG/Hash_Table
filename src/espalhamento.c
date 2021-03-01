@@ -25,7 +25,7 @@ void init_table_states(HashTable_t* table, unsigned long initial_capacity)
 	}
 }
 
-bool ht_init(HashTable_t* table)
+const bool ht_init(HashTable_t* table)
 {
 	unsigned long initial_capacity;
 
@@ -46,7 +46,7 @@ bool ht_init(HashTable_t* table)
 	return HT_SUCCESS;
 }
 
-bool ht_clear(HashTable_t* table)
+const bool ht_clear(HashTable_t* table)
 {
 	free(table->items);
 	free(table->states);
@@ -103,7 +103,7 @@ unsigned long find_cell_index_for_insertion(const HashTable_t* table, Item_t* re
 	return candidate_cell_index;
 }
 
-bool ht_insert(HashTable_t* table, Item_t* item)
+const bool ht_insert(HashTable_t* table, Item_t* item)
 {
 	if (ht_has_high_density(table))
 	{
@@ -129,7 +129,7 @@ unsigned long next_candidate_index(const HashTable_t* table, unsigned long candi
 	return (candidate_index + 1) % table->capacity;
 }
 
-bool ht_search(HashTable_t* table, Item_t* item)
+const bool ht_search(HashTable_t* table, Item_t* item)
 {
 	unsigned long candidate_index = ht_hash_string(item->name, table->capacity);
 	const unsigned long initial_guess = candidate_index;
@@ -158,7 +158,7 @@ bool ht_has_low_density(HashTable_t* table)
 	return ht_density(table) < HT_LOW_DENSITY;
 }
 
-bool ht_remove_item(HashTable_t* table, Item_t* item)
+const bool ht_remove_item(HashTable_t* table, Item_t* item)
 {
 	if (table->count == 0)
 	{
@@ -199,7 +199,7 @@ double ht_density(HashTable_t* table)
 	return (double)table->count / (double)table->capacity;
 }
 
-bool ht_expand(HashTable_t* table)
+const bool ht_expand(HashTable_t* table)
 {
 	if (table->N == HASH_MAX_N)
 	{
@@ -243,7 +243,7 @@ bool ht_expand(HashTable_t* table)
 	return HT_SUCCESS;
 }
 
-bool ht_shrink(HashTable_t* table)
+const bool ht_shrink(HashTable_t* table)
 {
 	unsigned long novo_M, M_antigo;
 	unsigned short novo_N;
@@ -303,7 +303,7 @@ bool ht_shrink(HashTable_t* table)
 	return true;
 }
 
-bool calcula_primo_proximo_2aN(unsigned short N, unsigned long* primo)
+const bool calcula_primo_proximo_2aN(unsigned short N, unsigned long* primo)
 {
 	// https://primes.utm.edu/lists/2small/0bit.html
 	// https://en.wikipedia.org/wiki/List_of_prime_numbers
