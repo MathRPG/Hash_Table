@@ -5,7 +5,6 @@
 
 #include "article.h"
 
-struct HashTable_s;
 typedef struct HashTable_s HashTable_t;
 
 HashTable_t* ht_create(void);

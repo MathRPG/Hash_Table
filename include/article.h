@@ -3,7 +3,6 @@
 
 #include <stdbool.h>
 
-struct Article_s;
 typedef struct Article_s Article_t;
 
 Article_t* make_article(const char* doi, const char* title, const char* author, unsigned int year);

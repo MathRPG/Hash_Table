@@ -147,8 +147,10 @@ void test_hash_table_insert_override_key()
 {
 	HashTable_t* ht = ht_create();
 	const char* repeat_key = "Repeat_DOI";
+	const char* other_key = "Other_DOI";
 	Article_t* first_version = make_article(repeat_key, "First_Title", "", 0);
 	Article_t* second_version = make_article(repeat_key, "Second_Title", "", 0);
+	Article_t* other_article = make_article(other_key, "", "", 0);
 
 	// Inserting two articles with same key replaces the first version
 	ht_insert(ht, first_version);
@@ -158,8 +160,22 @@ void test_hash_table_insert_override_key()
 	assert(articles_are_equal(second_version, fetched));
 	debug("Insertion override: inserting repeat key overrides old value");
 
+	ht_delete(ht);
+
+	// Inserting two articles, removing the first and replacing the second replaces correctly
+	ht = ht_create();
+
+	ht_insert(ht, other_article);
+	ht_insert(ht, first_version);
+	ht_remove(ht, other_key);
+	ht_insert(ht, second_version);
+
+	assert(ht_count(ht) == 1);
+	debug("Insertion Ov.: ins. two, removing first, replacing second does the thing");
+
 	delete_article(first_version);
 	delete_article(second_version);
+	delete_article(other_article);
 	ht_delete(ht);
 }
 

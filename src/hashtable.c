@@ -49,19 +49,27 @@ bool ht_contains(HashTable_t* ht, const char* key)
 
 void ht_insert(HashTable_t* ht, Article_t* article)
 {
+	// Find and replace?
 	for (ht_index_t i = 0; i < ht->capacity; ++i)
+	{
+		if (ht->items[i] != NULL && articles_have_same_key(ht->items[i], article))
+		{
+			delete_article(ht->items[i]);
+			ht->items[i] = duplicate_article(article);
+			return;
+		}
+	}
+
+	// New key who dis?
+	for (ht_index_t i = 0; i < ht->capacity; ++i)
+	{
 		if (ht->items[i] == NULL)
 		{
 			ht->items[i] = duplicate_article(article);
 			ht->count++;
 			return;
 		}
-		else if (articles_have_same_key(ht->items[i], article))
-		{
-			delete_article(ht->items[i]);
-			ht->items[i] = duplicate_article(article);
-			return;
-		}
+	}
 }
 
 ht_index_t ht_count(HashTable_t* ht)
