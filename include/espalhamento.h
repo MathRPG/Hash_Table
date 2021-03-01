@@ -26,13 +26,14 @@ typedef struct hash_table
 typedef int HT_STATUS_FLAG;
 static HT_STATUS_FLAG HT_FAILURE = 0;
 static HT_STATUS_FLAG HT_SUCCESS = 1;
+
 HT_STATUS_FLAG ht_init(HashTable_t* table);
 HT_STATUS_FLAG ht_clear(HashTable_t* table);
 HT_STATUS_FLAG ht_insert(HashTable_t* table, Item_t* item);
 HT_STATUS_FLAG ht_remove_item(HashTable_t* table, Item_t* item);
 HT_STATUS_FLAG ht_search(HashTable_t* table, Item_t* item);
 
-void ocupacao_da_tabela_hash(HashTable_t* table);
+void ht_print(HashTable_t* table);
 
 double ht_density(HashTable_t* table);
 HT_STATUS_FLAG ht_expand(HashTable_t* table);

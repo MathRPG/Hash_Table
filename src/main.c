@@ -14,7 +14,7 @@ int main()
 		exit(1);
 	}
 
-	ocupacao_da_tabela_hash(&tabela);
+	ht_print(&tabela);
 
 	strcpy(p.name, "Chicoh");
 	strcpy(p.email, "chicoh@ceu.org.br");
@@ -66,7 +66,7 @@ int main()
 		printf("Inserido\n");
 	}
 
-	ocupacao_da_tabela_hash(&tabela);
+	ht_print(&tabela);
 
 	// Recuperando uma chave que existe
 	strcpy(q.name, "Joao Grilo");
@@ -145,12 +145,12 @@ int main()
 		printf("%s nao existe na tabela\n", q.name);
 	}
 
-	ocupacao_da_tabela_hash(&tabela);
+	ht_print(&tabela);
 
 	printf("Expandindo a tabela...\n");
 	ht_expand(&tabela);
 
-	ocupacao_da_tabela_hash(&tabela);
+	ht_print(&tabela);
 
 	if (ht_clear(&tabela))
 	{
