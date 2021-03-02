@@ -2,6 +2,7 @@
 #define ARTICLE_H
 
 #include <stdbool.h>
+#include <stdio.h>
 
 typedef struct Article_s Article_t;
 
@@ -12,5 +13,7 @@ void delete_article(Article_t* a);
 const char* key_of(const Article_t* article);
 bool article_has_key(const Article_t* article, const char* key);
 bool articles_are_equal(const Article_t* a, const Article_t* b);
+
+void display_article(const Article_t* article, FILE* out);
 
 #endif //ARTICLE_H

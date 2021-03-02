@@ -157,16 +157,22 @@ const Article_t* ht_fetch(const HashTable_t* const ht, const char* const key)
 	return i != HT_KEY_NOT_FOUND ? ht->items[i] : NULL;
 }
 
+double ht_density(const HashTable_t* const ht)
+{
+	return ((double)ht->count) / ht->capacity;
+}
+
+void expand_if_density_is_high(HashTable_t* const ht)
+{
+	if (ht_density(ht) > HT_HIGH_DENSITY_BOUND)
+		ht_expand(ht);
+}
+
 void insert_item_at_index(HashTable_t* const ht, const Article_t* const article, const ht_index_t i)
 {
 	ht->items[i] = duplicate_article(article);
 	ht->states[i] = OCCUPIED;
 	ht->count++;
-}
-
-double ht_density(const HashTable_t* const ht)
-{
-	return ((double)ht->count) / ht->capacity;
 }
 
 void replace_item_at_index(HashTable_t* const ht, const Article_t* const article, const ht_index_t i)
@@ -177,23 +183,18 @@ void replace_item_at_index(HashTable_t* const ht, const Article_t* const article
 
 void ht_insert(HashTable_t* const ht, const Article_t* const article)
 {
+	expand_if_density_is_high(ht);
+
 	ht_index_t const hashed_index = ht_hash_key(ht, key_of(article));
 	ht_index_t current_index = hashed_index;
 
 	do
 	{
 		if (ht->states[current_index] == OPEN)
-		{
-			insert_item_at_index(ht, article, current_index);
+			return insert_item_at_index(ht, article, current_index);
 
-			if (ht_density(ht) > HT_HIGH_DENSITY_BOUND)
-				ht_expand(ht);
-
-			return;
-		}
-
-		if (cell_at_index_has_key(ht, current_index, key_of(article)))
-			return replace_item_at_index(ht, article, current_index);
+//		if (cell_at_index_has_key(ht, current_index, key_of(article)))
+//			return replace_item_at_index(ht, article, current_index);
 
 		current_index = next_index_in_cycle(ht, current_index);
 
@@ -207,6 +208,12 @@ void remove_item_at_index(HashTable_t* const ht, const ht_index_t i)
 	ht->count--;
 }
 
+void shrink_if_density_is_low(HashTable_t* const ht)
+{
+	if (ht_density(ht) < HT_LOW_DENSITY_BOUND)
+		ht_shrink(ht);
+}
+
 void ht_remove(HashTable_t* const ht, const char* const key)
 {
 	const ht_index_t i = find_index_of_key(ht, key);
@@ -215,9 +222,7 @@ void ht_remove(HashTable_t* const ht, const char* const key)
 		return;
 
 	remove_item_at_index(ht, i);
-
-	if (ht_density(ht) < HT_LOW_DENSITY_BOUND)
-		ht_shrink(ht);
+	shrink_if_density_is_low(ht);
 }
 
 void ht_resize(HashTable_t* const ht, const ht_index_t new_capacity)
@@ -227,6 +232,7 @@ void ht_resize(HashTable_t* const ht, const ht_index_t new_capacity)
 
 	HashTable_t old_table = *ht;
 
+	ht->count = 0;
 	ht->capacity = new_capacity;
 	alloc_and_init_items_and_states(ht);
 
@@ -262,48 +268,51 @@ bool item_at_index_was_hashed_directly(const HashTable_t* const ht, const ht_ind
 
 void ht_display_states(HashTable_t* ht, FILE* out)
 {
-	printf("--- Ocupacao da tabela ---------------------------------------\n"
-		   "Capacidade total.....: %10lu\n"
-		   "Valor de N...........: %10u\n"
-		   "Slots ocupados (%%)...: %10lu (%.2f%%)\n\n"
-		   "(.) Posicao vazia\n"
-		   "(o) Posicao vazia, mas que ja foi ocupada\n"
-		   "(H) Posicao ocupada por registro na posicao correta\n"
-		   "(C) Posicao ocupada por registro relocado\n",
+	fprintf(out,
+			"--- Ocupacao da tabela ---------------------------------------\n"
+			"Capacidade total.....: %10lu\n"
+			"Valor de N...........: %10u\n"
+			"Slots ocupados (%%)...: %10lu (%.2f%%)\n\n"
+			"(.) Posicao vazia\n"
+			"(o) Posicao vazia, mas que ja foi ocupada\n"
+			"(H) Posicao ocupada por registro na posicao correta\n"
+			"(C) Posicao ocupada por registro relocado\n",
 			ht->capacity, ht->capacity_index + 4, ht->count, ht_density(ht));
 
-	printf("-------------------------------------------------------------\n"
-		   "           01234567890123456789012345678901234567890123456789");
+	fprintf(out,
+			"-------------------------------------------------------------\n"
+			"           01234567890123456789012345678901234567890123456789");
 
 	for (ht_index_t i = 0; i < ht->capacity; ++i)
 	{
 		if (i % 50 == 0)
 		{
-			putchar('\n');
-			printf("%10lu", i);
+			putc('\n', out);
+			fprintf(out, "%10lu ", i);
 		}
 
 		switch (ht->states[i])
 		{
 
 		case OPEN:
-			putchar('.');
+			putc('.', out);
 			break;
 
 		case OCCUPIED:
 			if (item_at_index_was_hashed_directly(ht, i))
-				putchar('H');
+				putc('H', out);
 			else
-				putchar('C');
+				putc('C', out);
 			break;
 
 		case REMOVED:
-			putchar('o');
+			putc('o', out);
 			break;
 		}
 	}
 
-	printf("\n"
-		   "           01234567890123456789012345678901234567890123456789\n"
-		   "-------------------------------------------------------------\n");
+	fprintf(out,
+			"\n"
+			"           01234567890123456789012345678901234567890123456789\n"
+			"-------------------------------------------------------------\n");
 }

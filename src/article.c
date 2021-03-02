@@ -78,3 +78,8 @@ bool articles_are_equal(const Article_t* const a, const Article_t* const b)
 		return false;
 	return true;
 }
+
+void display_article(const Article_t* article, FILE* out)
+{
+	fprintf(out, "O email de %s eh %s\n", article->doi, article->title);
+}
