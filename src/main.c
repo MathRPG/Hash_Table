@@ -60,7 +60,7 @@ void test_hash_table_single_article()
 	const char* const not_inserted_key = "Other_DOI";
 
 	Article_t* a = make_article(inserted_key, "Title", "Author", 2000u);
-	ht_insert(ht, a);
+	ht_insert(ht, inserted_key, a);
 
 	// Should not be empty after one insertion
 	assert(ht_is_empty(ht) == false);
@@ -110,8 +110,8 @@ void test_hash_table_multiple_articles()
 	Article_t* article_one = make_article(key_one, "", "", 0);
 	Article_t* article_two = make_article(key_two, "", "", 0);
 
-	ht_insert(ht, article_one);
-	ht_insert(ht, article_two);
+	ht_insert(ht, key_one, article_one);
+	ht_insert(ht, key_two, article_two);
 
 	assert(ht_count(ht) == 2);
 	debug("Two value table: properties are correct");
@@ -126,7 +126,7 @@ void test_hash_table_multiple_articles()
 	assert(articles_are_equal(article_two, fetched));
 	debug("Two value table: Removing key_one keeps key_two");
 
-	ht_insert(ht, article_one);
+	ht_insert(ht, key_one, article_one);
 
 	// Remove key_two keeps key_one in table
 	ht_remove(ht, key_two);
@@ -153,8 +153,8 @@ void test_hash_table_insert_override_key()
 	Article_t* other_article = make_article(other_key, "", "", 0);
 
 	// Inserting two articles with same key replaces the first version
-	ht_insert(ht, first_version);
-	ht_insert(ht, second_version);
+	ht_insert(ht, repeat_key, first_version);
+	ht_insert(ht, repeat_key, second_version);
 	assert(ht_count(ht) == 1);
 	const Article_t* fetched = ht_fetch(ht, repeat_key);
 	assert(articles_are_equal(second_version, fetched));
@@ -165,10 +165,10 @@ void test_hash_table_insert_override_key()
 	// Inserting two articles, removing the first and replacing the second replaces correctly
 	ht = ht_create();
 
-	ht_insert(ht, other_article);
-	ht_insert(ht, first_version);
+	ht_insert(ht, other_key, other_article);
+	ht_insert(ht, repeat_key, first_version);
 	ht_remove(ht, other_key);
-	ht_insert(ht, second_version);
+	ht_insert(ht, repeat_key, second_version);
 
 	assert(ht_count(ht) == 1);
 	debug("Insertion Ov.: ins. two, removing first, replacing second does the thing");

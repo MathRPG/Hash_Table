@@ -66,7 +66,3 @@ Article_t* duplicate_article(const Article_t* original)
 	return copy;
 }
 
-bool articles_have_same_key(const Article_t* a, const Article_t* b)
-{
-	return strings_equal_up_to(a->doi, b->doi, MAX_STR_FIELD_LEN);
-}
