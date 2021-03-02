@@ -316,3 +316,41 @@ void ht_display_states(HashTable_t* ht, FILE* out)
 			"           01234567890123456789012345678901234567890123456789\n"
 			"-------------------------------------------------------------\n");
 }
+
+ht_index_t read_capacity(FILE* in)
+{
+	ht_index_t capacity;
+	fscanf(in, "%lu", &capacity);
+	return capacity;
+}
+
+HashTable_t* ht_from_file(FILE* const in)
+{
+	HashTable_t* ht = ht_new();
+
+	ht_resize(ht, read_capacity(in));
+
+	if (!feof(in))
+	{
+		puts("Hey there");
+		Article_t * a = article_from_file(in);
+		ht_insert(ht, a);
+		delete_article(a);
+	}
+
+	return ht;
+}
+
+void ht_dump(const HashTable_t* ht, FILE* const out)
+{
+	fprintf(out, "%lu", ht_capacity(ht));
+
+	for (ht_index_t i = 0; i < ht_capacity(ht); ++i)
+	{
+		if (ht->states[i] == OCCUPIED)
+		{
+			dump_article(ht->items[i], out);
+			break;
+		}
+	}
+}

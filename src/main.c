@@ -213,6 +213,78 @@ void test_hash_table_resize()
 	ht_delete(ht);
 }
 
+void test_hash_table_file_operations_empty_table()
+{
+	HashTable_t* ht = ht_new();
+
+	// Dumping empty hash table
+	FILE* fp = fopen("hash.bin", "wb");
+	ht_dump(ht, fp);
+
+	ht_delete(ht);
+
+	// Reading ht from same file
+	freopen("hash.bin", "r", fp);
+	ht = ht_from_file(fp);
+
+	// Make sure it's an empty hash table
+	assert(ht_is_empty(ht) == true);
+	assert(ht_count(ht) == 0);
+	debug("Can dump empty table");
+
+	ht_delete(ht);
+	fclose(fp);
+}
+
+void test_hash_table_file_operations_resized_table()
+{// Can dump/read resized ht
+	HashTable_t* ht = ht_new();
+	unsigned long resized_capacity = ht_capacity(ht) + 1;
+	FILE* fp = fopen("hash.bin", "wb");
+
+	ht_resize(ht, resized_capacity);
+	ht_dump(ht, fp);
+
+	freopen("hash.bin", "r", fp);
+	ht_delete(ht);
+	ht = ht_from_file(fp);
+
+	assert(ht_capacity(ht) == resized_capacity);
+	debug("Can dump resized table");
+
+	ht_delete(ht);
+	fclose(fp);
+}
+
+void test_hash_table_file_operations()
+{
+	test_hash_table_file_operations_empty_table();
+	test_hash_table_file_operations_resized_table();
+
+	// Test hashtable with one item
+	HashTable_t* ht = ht_new();
+	const char* const a_key = "DOI";
+	Article_t* const a = make_article(a_key, "Title", "Author", 2000);
+	FILE* fp = fopen("hash.bin", "wb");
+
+	ht_insert(ht, a);
+	ht_dump(ht, fp);
+
+	freopen("hash.bin", "r", fp);
+	ht_delete(ht);
+	ht = ht_from_file(fp);
+
+	assert(ht_is_empty(ht) == false);
+	assert(ht_count(ht) == 1);
+	assert(ht_contains(ht, a_key) == true);
+	const Article_t* const fetched = ht_fetch(ht, a_key);
+	assert(fetched != NULL);
+	assert(articles_are_equal(a, fetched));
+
+	delete_article(a);
+	ht_delete(ht);
+}
+
 void print_test_status()
 {
 	if (global_failure)
@@ -238,6 +310,7 @@ int main(void)
 	test_hash_table_multiple_articles();
 	test_hash_table_insert_override_key();
 	test_hash_table_resize();
+	test_hash_table_file_operations();
 
 	global_failure = false;
 

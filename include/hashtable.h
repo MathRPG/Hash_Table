@@ -10,6 +10,7 @@ typedef struct HashTable_s HashTable_t;
 
 // Constructors/Destructors
 HashTable_t* ht_new(void);
+HashTable_t* ht_from_file(FILE* in);
 void ht_delete(HashTable_t* ht);
 
 // Queries
@@ -26,5 +27,6 @@ void ht_resize(HashTable_t* ht, unsigned long new_capacity);
 void ht_expand(HashTable_t* ht);
 void ht_shrink(HashTable_t* ht);
 void ht_display_states(HashTable_t* ht, FILE* out);
+void ht_dump(const HashTable_t* ht, FILE* out);
 
 #endif //HASH_TABLE_H

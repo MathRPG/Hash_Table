@@ -83,3 +83,13 @@ void display_article(const Article_t* article, FILE* out)
 {
 	fprintf(out, "O email de %s eh %s\n", article->doi, article->title);
 }
+
+Article_t* article_from_file(FILE* in)
+{
+	return make_article("DOI", "Title", "Author", 2000);
+}
+
+void dump_article(const Article_t* article, FILE* out)
+{
+	fprintf(out, "a");
+}
