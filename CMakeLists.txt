@@ -5,5 +5,8 @@ set(CMAKE_C_STANDARD 11)
 
 include_directories(include)
 
-add_executable(HashTable
-        src/main.c src/hashtable.c src/article.c)
+add_executable(HashTableTests
+        src/tests.c src/hashtable.c src/article.c)
+
+add_executable(HashTableDemonstration
+        src/demonstration.c src/hashtable.c src/article.c)

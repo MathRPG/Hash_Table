@@ -102,7 +102,6 @@ Article_t* article_from_file(FILE* in)
 	read_line_to(in, empty_article->doi);
 	read_line_to(in, empty_article->title);
 	read_line_to(in, empty_article->author);
-
 	fscanf(in, "%u\n", &empty_article->year);
 
 	return empty_article;

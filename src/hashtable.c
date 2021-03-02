@@ -106,7 +106,7 @@ ht_index_t ht_hash_key(const HashTable_t* const ht, const char* key)
 	return candidate_index;
 }
 
-bool cell_at_index_has_key(const HashTable_t* ht, const ht_index_t i, const char* const key)
+bool item_at_index_has_key(const HashTable_t* ht, const ht_index_t i, const char* const key)
 {
 	return ht->states[i] == OCCUPIED && article_has_key(ht->items[i], key);
 }
@@ -126,7 +126,7 @@ ht_index_t find_index_of_key(const HashTable_t* const ht, const char* const key)
 		if (ht->states[current_index] == OPEN)
 			return HT_KEY_NOT_FOUND;
 
-		if (cell_at_index_has_key(ht, current_index, key))
+		if (item_at_index_has_key(ht, current_index, key))
 			return current_index;
 
 		current_index = next_index_in_cycle(ht, current_index);
@@ -193,7 +193,7 @@ void ht_insert(HashTable_t* const ht, const Article_t* const article)
 		if (ht->states[current_index] == OPEN)
 			return insert_item_at_index(ht, article, current_index);
 
-		if (cell_at_index_has_key(ht, current_index, key_of(article)))
+		if (item_at_index_has_key(ht, current_index, key_of(article)))
 			return replace_item_at_index(ht, article, current_index);
 
 		current_index = next_index_in_cycle(ht, current_index);
@@ -266,7 +266,7 @@ bool item_at_index_was_hashed_directly(const HashTable_t* const ht, const ht_ind
 	return ht_hash_key(ht, key_of(ht->items[i])) == i;
 }
 
-void ht_display_states(HashTable_t* ht, FILE* out)
+void ht_display_states(const HashTable_t* const ht, FILE* out)
 {
 	fprintf(out,
 			"--- Ocupacao da tabela ---------------------------------------\n"
@@ -299,10 +299,7 @@ void ht_display_states(HashTable_t* ht, FILE* out)
 			break;
 
 		case OCCUPIED:
-			if (item_at_index_was_hashed_directly(ht, i))
-				putc('H', out);
-			else
-				putc('C', out);
+			putc(item_at_index_was_hashed_directly(ht, i) ? 'H' : 'C', out);
 			break;
 
 		case REMOVED:
@@ -317,7 +314,7 @@ void ht_display_states(HashTable_t* ht, FILE* out)
 			"-------------------------------------------------------------\n");
 }
 
-ht_index_t read_capacity(FILE* in)
+ht_index_t read_capacity(FILE* const in)
 {
 	ht_index_t capacity;
 	fscanf(in, "%lu\n", &capacity);
@@ -332,7 +329,6 @@ HashTable_t* ht_from_file(FILE* const in)
 
 	while (!feof(in))
 	{
-		puts("Hey there");
 		Article_t* a = article_from_file(in);
 		ht_insert(ht, a);
 		delete_article(a);
@@ -346,10 +342,6 @@ void ht_dump(const HashTable_t* ht, FILE* const out)
 	fprintf(out, "%lu\n", ht->capacity);
 
 	for (ht_index_t i = 0; i < ht_capacity(ht); ++i)
-	{
 		if (ht->states[i] == OCCUPIED)
-		{
 			dump_article(ht->items[i], out);
-		}
-	}
 }
