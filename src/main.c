@@ -179,7 +179,7 @@ void test_hash_table_insert_override_key()
 	ht_delete(ht);
 }
 
-void test_hash_table_ensure_capacity()
+void test_hash_table_resize()
 {
 	HashTable_t* ht = ht_new();
 	const unsigned long original_capacity = ht_capacity(ht);
@@ -203,6 +203,20 @@ void test_hash_table_ensure_capacity()
 
 	assert(expanded_capacity > original_capacity);
 	debug("Table expands");
+
+	ht_resize(ht, original_capacity);
+	assert(ht_capacity(ht) == expanded_capacity);
+	debug("Does not resize to less space than necessary to fit items in it");
+
+	// Table resizes to save memory
+	for (unsigned long i = 0; i < original_capacity + 5; ++i)
+	{
+		snprintf(buffer, 32, "DOI_%lu", i);
+		ht_remove(ht, buffer);
+	}
+
+	assert(ht_capacity(ht) < expanded_capacity);
+	debug("Resizes to save space");
 
 	ht_delete(ht);
 }
@@ -231,7 +245,7 @@ int main(void)
 	test_hash_table_single_article();
 	test_hash_table_multiple_articles();
 	test_hash_table_insert_override_key();
-	test_hash_table_ensure_capacity();
+	test_hash_table_resize();
 
 	global_failure = false;
 

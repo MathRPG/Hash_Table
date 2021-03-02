@@ -23,6 +23,39 @@ struct HashTable_s
 	CellState_t* states;
 };
 
+
+void ht_resize(HashTable_t* const ht, const ht_index_t new_capacity)
+{
+	if (new_capacity < ht->count || new_capacity < HT_INITIAL_CAPACITY)
+		return;
+
+	HashTable_t old_table = *ht;
+
+	// EXPAND DONG
+	ht->capacity = new_capacity;
+	ht->items = (Article_t**)malloc(ht->capacity * sizeof(Article_t*));
+	ht->states = (CellState_t*)malloc(ht->capacity * sizeof(CellState_t));
+
+	for (ht_index_t i = 0, transferred = 0;
+		 i < old_table.capacity && transferred < old_table.count; ++i)
+	{
+		if (old_table.states[i] == OCCUPIED)
+		{
+			ht_insert(ht, old_table.items[i]);
+			transferred++;
+		}
+	}
+
+	// Delete old_table
+	for (ht_index_t i = 0; i < old_table.capacity; ++i)
+		if (old_table.states[i] == OCCUPIED)
+			delete_article(old_table.items[i]);
+
+	free(old_table.items);
+	free(old_table.states);
+}
+
+static const double HT_LOW_DENSITY_BOUND = 0.25;
 static const double HT_HIGH_DENSITY_BOUND = 0.75;
 
 HashTable_t* ht_new(void)
@@ -128,41 +161,10 @@ double ht_density(const HashTable_t* const ht)
 	return ((double)ht->count) / ht->capacity;
 }
 
-void ht_resize(HashTable_t* const ht, const ht_index_t new_capacity)
-{
-	if (new_capacity < ht->count)
-		return;
-
-	HashTable_t old_table = *ht;
-
-	// EXPAND DONG
-	ht->capacity = new_capacity;
-	ht->items = (Article_t**)malloc(ht->capacity * sizeof(Article_t*));
-	ht->states = (CellState_t*)malloc(ht->capacity * sizeof(CellState_t));
-
-	for (ht_index_t i = 0, transferred = 0;
-		 i < old_table.capacity && transferred < old_table.count; ++i)
-	{
-		if (old_table.states[i] == OCCUPIED)
-		{
-			ht_insert(ht, old_table.items[i]);
-			transferred++;
-		}
-	}
-
-	// Delete old_table
-	for (ht_index_t i = 0; i < old_table.capacity; ++i)
-		if (old_table.states[i] == OCCUPIED)
-			delete_article(old_table.items[i]);
-
-	free(old_table.items);
-	free(old_table.states);
-}
-
 void ht_insert(HashTable_t* const ht, const Article_t* const article)
 {
 	if (ht_density(ht) > HT_HIGH_DENSITY_BOUND)
-		ht_resize(ht, ht->capacity + 100);
+		ht_resize(ht, ht->capacity + 100); // TODO: Figure out if two resizes breaks things
 
 	ht_index_t const hashed_index = ht_hash_key(ht, key_of(article));
 	ht_index_t current_index = hashed_index;
@@ -205,6 +207,9 @@ void ht_remove(HashTable_t* const ht, const char* const key)
 	if (i != HT_KEY_NOT_FOUND)
 	{
 		remove_item_at_index(ht, i);
+
+		if (ht_density(ht) < HT_LOW_DENSITY_BOUND)
+			ht_resize(ht, ht->capacity - 1);
 	}
 }
 
