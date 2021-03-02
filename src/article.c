@@ -86,10 +86,20 @@ void display_article(const Article_t* article, FILE* out)
 
 Article_t* article_from_file(FILE* in)
 {
-	return make_article("DOI", "Title", "Author", 2000);
+	Article_t * empty_article = make_article("", "", "", 0);
+
+	fscanf(in, "%s\n", empty_article->doi);
+	fscanf(in, "%s\n", empty_article->title);
+	fscanf(in, "%s\n", empty_article->author);
+	fscanf(in, "%u\n", &empty_article->year);
+
+	return empty_article;
 }
 
 void dump_article(const Article_t* article, FILE* out)
 {
-	fprintf(out, "a");
+	fprintf(out, "%s\n", article->doi);
+	fprintf(out, "%s\n", article->title);
+	fprintf(out, "%s\n", article->author);
+	fprintf(out, "%u\n", article->year);
 }

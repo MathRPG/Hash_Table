@@ -320,7 +320,7 @@ void ht_display_states(HashTable_t* ht, FILE* out)
 ht_index_t read_capacity(FILE* in)
 {
 	ht_index_t capacity;
-	fscanf(in, "%lu", &capacity);
+	fscanf(in, "%lu\n", &capacity);
 	return capacity;
 }
 
@@ -330,10 +330,10 @@ HashTable_t* ht_from_file(FILE* const in)
 
 	ht_resize(ht, read_capacity(in));
 
-	if (!feof(in))
+	while (!feof(in))
 	{
 		puts("Hey there");
-		Article_t * a = article_from_file(in);
+		Article_t* a = article_from_file(in);
 		ht_insert(ht, a);
 		delete_article(a);
 	}
@@ -343,14 +343,13 @@ HashTable_t* ht_from_file(FILE* const in)
 
 void ht_dump(const HashTable_t* ht, FILE* const out)
 {
-	fprintf(out, "%lu", ht_capacity(ht));
+	fprintf(out, "%lu\n", ht->capacity);
 
 	for (ht_index_t i = 0; i < ht_capacity(ht); ++i)
 	{
 		if (ht->states[i] == OCCUPIED)
 		{
 			dump_article(ht->items[i], out);
-			break;
 		}
 	}
 }

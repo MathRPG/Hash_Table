@@ -224,7 +224,7 @@ void test_hash_table_file_operations_empty_table()
 	ht_delete(ht);
 
 	// Reading ht from same file
-	freopen("hash.bin", "r", fp);
+	freopen("hash.bin", "rb+", fp);
 	ht = ht_from_file(fp);
 
 	// Make sure it's an empty hash table
@@ -245,7 +245,7 @@ void test_hash_table_file_operations_resized_table()
 	ht_resize(ht, resized_capacity);
 	ht_dump(ht, fp);
 
-	freopen("hash.bin", "r", fp);
+	freopen("hash.bin", "rb", fp);
 	ht_delete(ht);
 	ht = ht_from_file(fp);
 
@@ -256,12 +256,8 @@ void test_hash_table_file_operations_resized_table()
 	fclose(fp);
 }
 
-void test_hash_table_file_operations()
-{
-	test_hash_table_file_operations_empty_table();
-	test_hash_table_file_operations_resized_table();
-
-	// Test hashtable with one item
+void test_hash_table_file_operations_one_article()
+{// Test hashtable with one item
 	HashTable_t* ht = ht_new();
 	const char* const a_key = "DOI";
 	Article_t* const a = make_article(a_key, "Title", "Author", 2000);
@@ -270,7 +266,7 @@ void test_hash_table_file_operations()
 	ht_insert(ht, a);
 	ht_dump(ht, fp);
 
-	freopen("hash.bin", "r", fp);
+	freopen("hash.bin", "rb+", fp);
 	ht_delete(ht);
 	ht = ht_from_file(fp);
 
@@ -280,8 +276,40 @@ void test_hash_table_file_operations()
 	const Article_t* const fetched = ht_fetch(ht, a_key);
 	assert(fetched != NULL);
 	assert(articles_are_equal(a, fetched));
+	debug("Can dump ht with one article");
 
 	delete_article(a);
+	ht_delete(ht);
+}
+
+void test_hash_table_file_operations()
+{
+	test_hash_table_file_operations_empty_table();
+	test_hash_table_file_operations_resized_table();
+	test_hash_table_file_operations_one_article();
+
+	HashTable_t* ht = ht_new();
+	const char* const a_key = "DOI";
+	const char* const b_key = "Other_DOI";
+	Article_t* const a = make_article(a_key, "Title", "Author", 2000);
+	Article_t* const b = make_article(b_key, "Title", "Author", 2000);
+	FILE* fp = fopen("hash.bin", "wb");
+
+	ht_insert(ht, a);
+	ht_insert(ht, b);
+	ht_dump(ht, fp);
+	ht_delete(ht);
+
+	freopen("hash.bin", "rb", fp);
+	ht = ht_from_file(fp);
+
+	assert(ht_is_empty(ht) == false);
+	assert(ht_count(ht) == 2);
+
+	debug("Can dump ht with two articles");
+
+	delete_article(a);
+	delete_article(b);
 	ht_delete(ht);
 }
 
