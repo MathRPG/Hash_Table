@@ -16,6 +16,5 @@ unsigned long ht_count(const HashTable_t* ht);
 const Article_t* ht_fetch(const HashTable_t* ht, const char* key);
 void ht_remove(HashTable_t* ht, const char* key);
 unsigned long ht_capacity(const HashTable_t* ht);
-void ht_ensure_capacity(const HashTable_t* ht, unsigned long min_capacity);
 
 #endif //HASH_TABLE_H

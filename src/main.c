@@ -182,13 +182,27 @@ void test_hash_table_insert_override_key()
 void test_hash_table_ensure_capacity()
 {
 	HashTable_t* ht = ht_new();
+	const unsigned long original_capacity = ht_capacity(ht);
 
 	// New table can accommodate at least one value
-	assert(ht_capacity(ht) >= 1);
+	assert(original_capacity >= 1);
+	debug("Capacity: new table has at least 1");
 
-//	ht_ensure_capacity(ht, 5lu);
+	char buffer [32] = "";
 
-//	assert(ht_capacity(ht) >= 5lu);
+	// Table resizes to accommodate more keys
+	for (unsigned long i = 0; i < original_capacity + 10; ++i)
+	{
+		snprintf(buffer, 32, "DOI_%lu", i);
+		Article_t * article = make_article(buffer, "", "", 0);
+		ht_insert(ht, article);
+		delete_article(article);
+	}
+
+	const unsigned long expanded_capacity = ht_capacity(ht);
+
+	assert(expanded_capacity > original_capacity);
+	debug("Table expands");
 
 	ht_delete(ht);
 }

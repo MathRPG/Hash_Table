@@ -12,7 +12,7 @@ typedef enum HashTableCellState CellState_t;
 
 enum HashTableCellState
 {
-	OPEN, FILLED, REMOVED
+	OPEN, OCCUPIED, REMOVED
 };
 
 struct HashTable_s
@@ -22,6 +22,8 @@ struct HashTable_s
 	Article_t** items;
 	CellState_t* states;
 };
+
+static const double HT_HIGH_DENSITY_BOUND = 0.75;
 
 HashTable_t* ht_new(void)
 {
@@ -44,6 +46,10 @@ HashTable_t* ht_new(void)
 
 void ht_delete(HashTable_t* const ht)
 {
+	for (ht_index_t i = 0; i < ht->capacity; ++i)
+		if (ht->states[i] == OCCUPIED)
+			delete_article(ht->items[i]);
+
 	free(ht->items);
 	free(ht->states);
 	free(ht);
@@ -71,7 +77,7 @@ ht_index_t ht_hash_key(const HashTable_t* const ht, const char* key)
 
 bool cell_at_index_has_key(const HashTable_t* ht, const ht_index_t i, const char* const key)
 {
-	return ht->states[i] == FILLED && article_has_key(ht->items[i], key);
+	return ht->states[i] == OCCUPIED && article_has_key(ht->items[i], key);
 }
 
 ht_index_t next_index_in_cycle(const HashTable_t* const ht, const ht_index_t i)
@@ -107,7 +113,7 @@ bool ht_contains(const HashTable_t* const ht, const char* key)
 void insert_item_at_index(HashTable_t* const ht, const Article_t* const article, const ht_index_t i)
 {
 	ht->items[i] = duplicate_article(article);
-	ht->states[i] = FILLED;
+	ht->states[i] = OCCUPIED;
 	ht->count++;
 }
 
@@ -117,8 +123,47 @@ void replace_item_at_index(HashTable_t* const ht, const Article_t* const article
 	ht->items[i] = duplicate_article(article);
 }
 
+double ht_density(const HashTable_t* const ht)
+{
+	return ((double)ht->count) / ht->capacity;
+}
+
+void ht_resize(HashTable_t* const ht, const ht_index_t new_capacity)
+{
+	if (new_capacity < ht->count)
+		return;
+
+	HashTable_t old_table = *ht;
+
+	// EXPAND DONG
+	ht->capacity = new_capacity;
+	ht->items = (Article_t**)malloc(ht->capacity * sizeof(Article_t*));
+	ht->states = (CellState_t*)malloc(ht->capacity * sizeof(CellState_t));
+
+	for (ht_index_t i = 0, transferred = 0;
+		 i < old_table.capacity && transferred < old_table.count; ++i)
+	{
+		if (old_table.states[i] == OCCUPIED)
+		{
+			ht_insert(ht, old_table.items[i]);
+			transferred++;
+		}
+	}
+
+	// Delete old_table
+	for (ht_index_t i = 0; i < old_table.capacity; ++i)
+		if (old_table.states[i] == OCCUPIED)
+			delete_article(old_table.items[i]);
+
+	free(old_table.items);
+	free(old_table.states);
+}
+
 void ht_insert(HashTable_t* const ht, const Article_t* const article)
 {
+	if (ht_density(ht) > HT_HIGH_DENSITY_BOUND)
+		ht_resize(ht, ht->capacity + 100);
+
 	ht_index_t const hashed_index = ht_hash_key(ht, key_of(article));
 	ht_index_t current_index = hashed_index;
 
@@ -158,15 +203,12 @@ void ht_remove(HashTable_t* const ht, const char* const key)
 	const ht_index_t i = find_index_of_key(ht, key);
 
 	if (i != HT_KEY_NOT_FOUND)
+	{
 		remove_item_at_index(ht, i);
+	}
 }
 
 unsigned long ht_capacity(const HashTable_t* ht)
 {
-	return 5;
-}
-
-void ht_ensure_capacity(const HashTable_t* ht, unsigned long min_capacity)
-{
-
+	return ht->capacity;
 }
