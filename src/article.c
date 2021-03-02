@@ -81,16 +81,28 @@ bool articles_are_equal(const Article_t* const a, const Article_t* const b)
 
 void display_article(const Article_t* article, FILE* out)
 {
-	fprintf(out, "O email de %s eh %s\n", article->doi, article->title);
+	fprintf(out,
+			"\tDOI: %s\n"
+			"\tTitle: %s\n"
+			"\tAuthor: %s\n"
+			"\tYear: %u\n",
+			article->doi, article->title, article->author, article->year);
+}
+
+void read_line_to(FILE* in, char* const target)
+{
+	fscanf(in, "%[^\n]s", target);
+	fgetc(in);
 }
 
 Article_t* article_from_file(FILE* in)
 {
-	Article_t * empty_article = make_article("", "", "", 0);
+	Article_t* empty_article = make_article("", "", "", 0);
 
-	fscanf(in, "%s\n", empty_article->doi);
-	fscanf(in, "%s\n", empty_article->title);
-	fscanf(in, "%s\n", empty_article->author);
+	read_line_to(in, empty_article->doi);
+	read_line_to(in, empty_article->title);
+	read_line_to(in, empty_article->author);
+
 	fscanf(in, "%u\n", &empty_article->year);
 
 	return empty_article;
