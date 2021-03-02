@@ -230,75 +230,16 @@ void print_test_status()
 
 int main(void)
 {
-//	global_failure = true;
-//	atexit(print_test_status);
+	global_failure = true;
+	atexit(print_test_status);
 
-//	test_empty_hash_table();
-//	test_hash_table_single_article();
-//	test_hash_table_multiple_articles();
-//	test_hash_table_insert_override_key();
-//	test_hash_table_resize();
+	test_empty_hash_table();
+	test_hash_table_single_article();
+	test_hash_table_multiple_articles();
+	test_hash_table_insert_override_key();
+	test_hash_table_resize();
 
-//	global_failure = false;
-
-	// Manual testing with state display
-
-	HashTable_t* ht = ht_new();
-
-	ht_display_states(ht, stdout);
-
-	Article_t* p = make_article("Chicoh", "chicoh@ceu.org.br", "", 0);
-	ht_insert(ht, p);
-	printf("Inserido\n");
-	delete_article(p);
-
-	p = make_article("Joao Grilo", "joaogrilo@ceu.org.br", "", 0);
-	ht_insert(ht, p);
-	printf("Inserido\n");
-	delete_article(p);
-
-	p = make_article("Fernando", "fernando@andrade.org.br", "", 0);
-
-	ht_insert(ht, p);
-	printf("Inserido\n");
-
-	ht_insert(ht, p);
-	printf("Inserido\n");
-
-	delete_article(p);
-
-	ht_display_states(ht, stdout);
-
-	const Article_t* f = ht_fetch(ht, "Joao Grilo");
-	display_article(f, stdout);
-
-	f = ht_fetch(ht, "Fernando");
-	display_article(f, stdout);
-
-	ht_fetch(ht, "Raimundo Nonato");
-	printf("Erro na recuperacao\n");
-
-	ht_remove(ht, "Chicoh");
-	printf("Chicoh removido\n");
-
-	ht_remove(ht, "Fernando");
-	printf("Fernando removido\n");
-
-	f = ht_fetch(ht, "Fernando");
-	display_article(f, stdout);
-
-	ht_remove(ht, "Raimundo Nonato");
-	printf("%s nao existe na tabela\n", "Raimundo Nonato");
-
-	ht_display_states(ht, stdout);
-
-	printf("Expandindo a tabela...\n");
-	ht_expand(ht);
-
-	ht_display_states(ht, stdout);
-
-	ht_delete(ht);
-	printf("Tabela destruida\n");
+	global_failure = false;
 
 	return 0;
 }

@@ -193,8 +193,8 @@ void ht_insert(HashTable_t* const ht, const Article_t* const article)
 		if (ht->states[current_index] == OPEN)
 			return insert_item_at_index(ht, article, current_index);
 
-//		if (cell_at_index_has_key(ht, current_index, key_of(article)))
-//			return replace_item_at_index(ht, article, current_index);
+		if (cell_at_index_has_key(ht, current_index, key_of(article)))
+			return replace_item_at_index(ht, article, current_index);
 
 		current_index = next_index_in_cycle(ht, current_index);
 
