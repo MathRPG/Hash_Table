@@ -5,25 +5,23 @@
 #include "hashtable.h"
 
 typedef unsigned long ht_index_t;
-static const int HT_KEY_NOT_FOUND = -1;
-
 typedef enum HashTableCellState CellState_t;
+
+struct HashTable_s
+{
+	ht_index_t count;
+	ht_index_t capacity;
+	unsigned short capacity_index;
+	Article_t** items;
+	CellState_t* states;
+};
 
 enum HashTableCellState
 {
 	OPEN, OCCUPIED, REMOVED
 };
 
-struct HashTable_s
-{
-	ht_index_t count;
-	unsigned short capacity_index;
-	ht_index_t capacity;
-	Article_t** items;
-	CellState_t* states;
-};
-
-// Deltas are such that 2 ^ (index + 4) - deltas[index] is a prime
+// Deltas are such that 2 ^ (i + 4) - deltas[i] is a prime
 // Keeping capacity as a prime is good for hash function dispersion
 static const unsigned short capacity_deltas[] =
 		{
@@ -33,6 +31,14 @@ static const unsigned short capacity_deltas[] =
 				1, 5, 9, 41, 31, 5, 25, 45, 7, 87,
 				21, 11, 57, 17, 55, 21, 115, 59, 81, 27
 		};
+
+static unsigned long const HASH_FUNCTION_A = 31415;
+static unsigned long const HASH_FUNCTION_B = 27183;
+
+static const int HT_KEY_NOT_FOUND = -1;
+
+static const double HT_LOW_DENSITY_BOUND = 0.25;
+static const double HT_HIGH_DENSITY_BOUND = 0.75;
 
 static const unsigned long HT_MAXIMUM_CAPACITY_INDEX = sizeof capacity_deltas / sizeof *capacity_deltas;
 
@@ -53,43 +59,6 @@ void alloc_and_init_items_and_states(HashTable_t* const ht)
 	}
 }
 
-void delete_and_free_items_and_states(HashTable_t* const ht)
-{
-	for (ht_index_t i = 0; i < ht->capacity; ++i)
-		if (ht->states[i] == OCCUPIED)
-			delete_article(ht->items[i]);
-
-	free(ht->items);
-	free(ht->states);
-}
-
-void ht_resize(HashTable_t* const ht, const ht_index_t new_capacity)
-{
-	if (new_capacity == 0 || new_capacity < ht->count)
-		return;
-
-	HashTable_t old_table = *ht;
-
-	// EXPAND DONG
-	ht->capacity = new_capacity;
-	alloc_and_init_items_and_states(ht);
-
-	for (ht_index_t i = 0, transferred = 0;
-		 i < old_table.capacity && transferred < old_table.count; ++i)
-	{
-		if (old_table.states[i] == OCCUPIED)
-		{
-			ht_insert(ht, old_table.items[i]);
-			transferred++;
-		}
-	}
-
-	delete_and_free_items_and_states(&old_table);
-}
-
-static const double HT_LOW_DENSITY_BOUND = 0.25;
-static const double HT_HIGH_DENSITY_BOUND = 0.75;
-
 HashTable_t* ht_new(void)
 {
 	HashTable_t* const new_table = (HashTable_t*)malloc(sizeof(HashTable_t));
@@ -103,6 +72,16 @@ HashTable_t* ht_new(void)
 	return new_table;
 }
 
+void delete_and_free_items_and_states(HashTable_t* const ht)
+{
+	for (ht_index_t i = 0; i < ht->capacity; ++i)
+		if (ht->states[i] == OCCUPIED)
+			delete_article(ht->items[i]);
+
+	free(ht->items);
+	free(ht->states);
+}
+
 void ht_delete(HashTable_t* const ht)
 {
 	delete_and_free_items_and_states(ht);
@@ -113,8 +92,6 @@ bool ht_is_empty(const HashTable_t* const ht)
 {
 	return ht->count == 0;
 }
-
-static unsigned long const HASH_FUNCTION_A = 31415, HASH_FUNCTION_B = 27183;
 
 ht_index_t ht_hash_key(const HashTable_t* const ht, const char* key)
 {
@@ -164,6 +141,22 @@ bool ht_contains(const HashTable_t* const ht, const char* key)
 	return find_index_of_key(ht, key) != HT_KEY_NOT_FOUND;
 }
 
+unsigned long ht_count(const HashTable_t* const ht)
+{
+	return ht->count;
+}
+
+unsigned long ht_capacity(const HashTable_t* ht)
+{
+	return ht->capacity;
+}
+
+const Article_t* ht_fetch(const HashTable_t* const ht, const char* const key)
+{
+	const ht_index_t i = find_index_of_key(ht, key);
+	return i != HT_KEY_NOT_FOUND ? ht->items[i] : NULL;
+}
+
 void insert_item_at_index(HashTable_t* const ht, const Article_t* const article, const ht_index_t i)
 {
 	ht->items[i] = duplicate_article(article);
@@ -171,21 +164,15 @@ void insert_item_at_index(HashTable_t* const ht, const Article_t* const article,
 	ht->count++;
 }
 
-void replace_item_at_index(HashTable_t* const ht, const Article_t* const article, const ht_index_t i)
-{
-	delete_article(ht->items[i]);
-	ht->items[i] = duplicate_article(article);
-}
-
 double ht_density(const HashTable_t* const ht)
 {
 	return ((double)ht->count) / ht->capacity;
 }
 
-void ht_expand(HashTable_t* const ht)
+void replace_item_at_index(HashTable_t* const ht, const Article_t* const article, const ht_index_t i)
 {
-	if (ht->capacity_index != HT_MAXIMUM_CAPACITY_INDEX)
-		ht_resize(ht, calculate_optimal_capacity_for_index(++ht->capacity_index));
+	delete_article(ht->items[i]);
+	ht->items[i] = duplicate_article(article);
 }
 
 void ht_insert(HashTable_t* const ht, const Article_t* const article)
@@ -213,28 +200,11 @@ void ht_insert(HashTable_t* const ht, const Article_t* const article)
 	} while (current_index != hashed_index);
 }
 
-unsigned long ht_count(const HashTable_t* const ht)
-{
-	return ht->count;
-}
-
-const Article_t* ht_fetch(const HashTable_t* const ht, const char* const key)
-{
-	const ht_index_t i = find_index_of_key(ht, key);
-	return i != HT_KEY_NOT_FOUND ? ht->items[i] : NULL;
-}
-
 void remove_item_at_index(HashTable_t* const ht, const ht_index_t i)
 {
 	delete_article(ht->items[i]);
 	ht->states[i] = REMOVED;
 	ht->count--;
-}
-
-void ht_shrink(HashTable_t* const ht)
-{
-	if (ht->capacity_index != 0)
-		ht_resize(ht, calculate_optimal_capacity_for_index(--ht->capacity_index));
 }
 
 void ht_remove(HashTable_t* const ht, const char* const key)
@@ -250,7 +220,37 @@ void ht_remove(HashTable_t* const ht, const char* const key)
 		ht_shrink(ht);
 }
 
-unsigned long ht_capacity(const HashTable_t* ht)
+void ht_resize(HashTable_t* const ht, const ht_index_t new_capacity)
 {
-	return ht->capacity;
+	if (new_capacity == 0 || new_capacity < ht->count)
+		return;
+
+	HashTable_t old_table = *ht;
+
+	ht->capacity = new_capacity;
+	alloc_and_init_items_and_states(ht);
+
+	for (ht_index_t i = 0, transferred = 0;
+		 i < old_table.capacity && transferred < old_table.count; ++i)
+	{
+		if (old_table.states[i] == OCCUPIED)
+		{
+			ht_insert(ht, old_table.items[i]);
+			transferred++;
+		}
+	}
+
+	delete_and_free_items_and_states(&old_table);
+}
+
+void ht_expand(HashTable_t* const ht)
+{
+	if (ht->capacity_index != HT_MAXIMUM_CAPACITY_INDEX)
+		ht_resize(ht, calculate_optimal_capacity_for_index(++ht->capacity_index));
+}
+
+void ht_shrink(HashTable_t* const ht)
+{
+	if (ht->capacity_index != 0)
+		ht_resize(ht, calculate_optimal_capacity_for_index(--ht->capacity_index));
 }
