@@ -14,7 +14,9 @@ struct Article_s
 	unsigned year;
 };
 
-Article_t* make_article(const char* doi, const char* title, const char* author, unsigned int year)
+Article_t* make_article(
+		const char* const doi, const char* const title,
+		const char* const author, const unsigned int year)
 {
 	Article_t* a = (Article_t*)malloc(sizeof(Article_t));
 
@@ -26,12 +28,12 @@ Article_t* make_article(const char* doi, const char* title, const char* author, 
 	return a;
 }
 
-void delete_article(Article_t* a)
+void delete_article(Article_t* const a)
 {
 	free(a);
 }
 
-bool strings_equal_up_to(const char* str_a, const char* str_b, const unsigned len)
+bool strings_equal_up_to(const char* const str_a, const char* const str_b, const unsigned len)
 {
 	return strncmp(str_a, str_b, len) == 0;
 }
@@ -49,12 +51,12 @@ bool articles_are_equal(const Article_t* const a, const Article_t* const b)
 	return true;
 }
 
-bool article_has_key(const Article_t* article, const char* key)
+bool article_has_key(const Article_t* const article, const char* const key)
 {
 	return strings_equal_up_to(article->doi, key, MAX_STR_FIELD_LEN);
 }
 
-Article_t* duplicate_article(const Article_t* original)
+Article_t* duplicate_article(const Article_t* const original)
 {
 	Article_t* const copy = (Article_t*)malloc(sizeof(Article_t));
 
@@ -64,5 +66,10 @@ Article_t* duplicate_article(const Article_t* original)
 	copy->year = original->year;
 
 	return copy;
+}
+
+const char* key_of(const Article_t* const article)
+{
+	return article->doi;
 }
 

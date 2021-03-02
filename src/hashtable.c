@@ -117,9 +117,9 @@ void replace_item_at_index(HashTable_t* const ht, const Article_t* const article
 	ht->items[i] = duplicate_article(article);
 }
 
-void ht_insert(HashTable_t* const ht, const char* const key, const Article_t* const article)
+void ht_insert(HashTable_t* const ht, const Article_t* const article)
 {
-	ht_index_t const hashed_index = ht_hash_key(ht, key);
+	ht_index_t const hashed_index = ht_hash_key(ht, key_of(article));
 	ht_index_t current_index = hashed_index;
 
 	do
@@ -127,7 +127,7 @@ void ht_insert(HashTable_t* const ht, const char* const key, const Article_t* co
 		if (ht->states[current_index] == OPEN)
 			return insert_item_at_index(ht, article, current_index);
 
-		if (cell_at_index_has_key(ht, current_index, key))
+		if (cell_at_index_has_key(ht, current_index, key_of(article)))
 			return replace_item_at_index(ht, article, current_index);
 
 		current_index = next_index_in_cycle(ht, current_index);
@@ -159,4 +159,14 @@ void ht_remove(HashTable_t* const ht, const char* const key)
 
 	if (i != HT_KEY_NOT_FOUND)
 		remove_item_at_index(ht, i);
+}
+
+unsigned long ht_capacity(const HashTable_t* ht)
+{
+	return 5;
+}
+
+void ht_ensure_capacity(const HashTable_t* ht, unsigned long min_capacity)
+{
+
 }
