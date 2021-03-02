@@ -182,41 +182,31 @@ void test_hash_table_insert_override_key()
 void test_hash_table_resize()
 {
 	HashTable_t* ht = ht_new();
+
 	const unsigned long original_capacity = ht_capacity(ht);
+	assert(original_capacity > 0);
+	debug("Empty table fits at least 1 item");
 
-	// New table can accommodate at least one value
-	assert(original_capacity >= 1);
-	debug("Capacity: new table has at least 1");
+	ht_shrink(ht);
+	assert(ht_capacity(ht) == original_capacity);
+	debug("Cannot shrink empty table");
 
-	char buffer [32] = "";
-
-	// Table resizes to accommodate more keys
-	for (unsigned long i = 0; i < original_capacity + 10; ++i)
-	{
-		snprintf(buffer, 32, "DOI_%lu", i);
-		Article_t * article = make_article(buffer, "", "", 0);
-		ht_insert(ht, article);
-		delete_article(article);
-	}
-
+	ht_expand(ht);
+	debug("Hello");
 	const unsigned long expanded_capacity = ht_capacity(ht);
-
 	assert(expanded_capacity > original_capacity);
-	debug("Table expands");
+	debug("Expansion increases size");
 
-	ht_resize(ht, original_capacity);
-	assert(ht_capacity(ht) == expanded_capacity);
-	debug("Does not resize to less space than necessary to fit items in it");
-
-	// Table resizes to save memory
-	for (unsigned long i = 0; i < original_capacity + 5; ++i)
-	{
-		snprintf(buffer, 32, "DOI_%lu", i);
-		ht_remove(ht, buffer);
-	}
-
+	ht_shrink(ht);
+	debug("Hello again!");
 	assert(ht_capacity(ht) < expanded_capacity);
-	debug("Resizes to save space");
+	debug("Shrinkage decreases size");
+
+	ht_expand(ht);
+	ht_expand(ht);
+	const unsigned long super_expanded_capacity = ht_capacity(ht);
+	assert(super_expanded_capacity > expanded_capacity);
+	debug("Super EXPANSION increases size even more");
 
 	ht_delete(ht);
 }

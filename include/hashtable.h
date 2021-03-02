@@ -17,5 +17,7 @@ const Article_t* ht_fetch(const HashTable_t* ht, const char* key);
 void ht_remove(HashTable_t* ht, const char* key);
 unsigned long ht_capacity(const HashTable_t* ht);
 void ht_resize(HashTable_t* ht, unsigned long new_capacity);
+void ht_expand(HashTable_t* ht);
+void ht_shrink(HashTable_t* ht);
 
 #endif //HASH_TABLE_H

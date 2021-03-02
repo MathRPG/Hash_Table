@@ -5,7 +5,6 @@
 #include "hashtable.h"
 
 typedef unsigned long ht_index_t;
-static const int HT_INITIAL_CAPACITY = 13;
 static const int HT_KEY_NOT_FOUND = -1;
 
 typedef enum HashTableCellState CellState_t;
@@ -18,23 +17,47 @@ enum HashTableCellState
 struct HashTable_s
 {
 	ht_index_t count;
+	unsigned short capacity_index;
 	ht_index_t capacity;
 	Article_t** items;
 	CellState_t* states;
 };
 
+// Deltas are such that 2 ^ (index + 4) - index is a prime
+// Keeping capacity as a prime is good for hash function dispersion
+static const unsigned short capacity_deltas[] = {
+		3, 1, 3, 1, 5, 3, 3,
+		9, 3, 1, 3, 19, 15, 1, 5, 1, 3,
+		9, 3, 15, 3, 39, 5, 39, 57, 3, 35,
+		1, 5, 9, 41, 31, 5, 25, 45, 7, 87,
+		21, 11, 57, 17, 55, 21, 115, 59, 81, 27
+};
+
+static const unsigned long HT_MAXIMUM_CAPACITY_INDEX = sizeof capacity_deltas / sizeof *capacity_deltas;
+
+unsigned long calculate_optimal_capacity_for_index(unsigned short index)
+{
+	return (1lu << (index + 4)) - capacity_deltas[index];
+}
 
 void ht_resize(HashTable_t* const ht, const ht_index_t new_capacity)
 {
-	if (new_capacity < ht->count || new_capacity < HT_INITIAL_CAPACITY)
+	if (new_capacity == 0 || new_capacity < ht->count)
 		return;
 
 	HashTable_t old_table = *ht;
 
 	// EXPAND DONG
 	ht->capacity = new_capacity;
+
 	ht->items = (Article_t**)malloc(ht->capacity * sizeof(Article_t*));
 	ht->states = (CellState_t*)malloc(ht->capacity * sizeof(CellState_t));
+
+	for (ht_index_t i = 0; i < ht->capacity; ++i)
+	{
+		ht->items[i] = NULL;
+		ht->states[i] = OPEN;
+	}
 
 	for (ht_index_t i = 0, transferred = 0;
 		 i < old_table.capacity && transferred < old_table.count; ++i)
@@ -63,7 +86,8 @@ HashTable_t* ht_new(void)
 	HashTable_t* const new_table = (HashTable_t*)malloc(sizeof(HashTable_t));
 
 	new_table->count = 0;
-	new_table->capacity = HT_INITIAL_CAPACITY;
+	new_table->capacity_index = 0;
+	new_table->capacity = calculate_optimal_capacity_for_index(0);
 
 	new_table->items = (Article_t**)malloc(new_table->capacity * sizeof(Article_t*));
 	new_table->states = (CellState_t*)malloc(new_table->capacity * sizeof(CellState_t));
@@ -161,10 +185,14 @@ double ht_density(const HashTable_t* const ht)
 	return ((double)ht->count) / ht->capacity;
 }
 
+void ht_expand(HashTable_t* const ht)
+{
+	if (ht->capacity_index != HT_MAXIMUM_CAPACITY_INDEX)
+		ht_resize(ht, calculate_optimal_capacity_for_index(++ht->capacity_index));
+}
+
 void ht_insert(HashTable_t* const ht, const Article_t* const article)
 {
-	if (ht_density(ht) > HT_HIGH_DENSITY_BOUND)
-		ht_resize(ht, ht->capacity + 100); // TODO: Figure out if two resizes breaks things
 
 	ht_index_t const hashed_index = ht_hash_key(ht, key_of(article));
 	ht_index_t current_index = hashed_index;
@@ -172,7 +200,14 @@ void ht_insert(HashTable_t* const ht, const Article_t* const article)
 	do
 	{
 		if (ht->states[current_index] == OPEN)
-			return insert_item_at_index(ht, article, current_index);
+		{
+			insert_item_at_index(ht, article, current_index);
+
+			if (ht_density(ht) > HT_HIGH_DENSITY_BOUND)
+				ht_expand(ht);
+
+			return;
+		}
 
 		if (cell_at_index_has_key(ht, current_index, key_of(article)))
 			return replace_item_at_index(ht, article, current_index);
@@ -200,6 +235,12 @@ void remove_item_at_index(HashTable_t* const ht, const ht_index_t i)
 	ht->count--;
 }
 
+void ht_shrink(HashTable_t* const ht)
+{
+	if (ht->capacity_index != 0)
+		ht_resize(ht, calculate_optimal_capacity_for_index(--ht->capacity_index));
+}
+
 void ht_remove(HashTable_t* const ht, const char* const key)
 {
 	const ht_index_t i = find_index_of_key(ht, key);
@@ -209,7 +250,7 @@ void ht_remove(HashTable_t* const ht, const char* const key)
 		remove_item_at_index(ht, i);
 
 		if (ht_density(ht) < HT_LOW_DENSITY_BOUND)
-			ht_resize(ht, ht->capacity - 1);
+			ht_shrink(ht);
 	}
 }
 
