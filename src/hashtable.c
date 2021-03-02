@@ -6,6 +6,7 @@
 
 typedef unsigned long ht_index_t;
 static const int HT_INITIAL_CAPACITY = 13;
+static const int HT_KEY_NOT_FOUND = -1;
 
 typedef enum HashTableCellState CellState_t;
 
@@ -22,10 +23,7 @@ struct HashTable_s
 	CellState_t* states;
 };
 
-#define HT_ITER_THROUGH_INDEXES(TABLE, VAR_NAME) \
-    for(ht_index_t VAR_NAME = 0; VAR_NAME < TABLE->capacity; ++VAR_NAME)
-
-HashTable_t* ht_create(void)
+HashTable_t* ht_new(void)
 {
 	HashTable_t* const new_table = (HashTable_t*)malloc(sizeof(HashTable_t));
 
@@ -35,7 +33,7 @@ HashTable_t* ht_create(void)
 	new_table->items = (Article_t**)malloc(new_table->capacity * sizeof(Article_t*));
 	new_table->states = (CellState_t*)malloc(new_table->capacity * sizeof(CellState_t));
 
-	HT_ITER_THROUGH_INDEXES(new_table, i)
+	for (ht_index_t i = 0; i < new_table->capacity; ++i)
 	{
 		new_table->items[i] = NULL;
 		new_table->states[i] = OPEN;
@@ -76,27 +74,34 @@ bool cell_at_index_has_key(const HashTable_t* ht, const ht_index_t i, const char
 	return ht->states[i] == FILLED && article_has_key(ht->items[i], key);
 }
 
-bool ht_contains(const HashTable_t* const ht, const char* key)
+ht_index_t next_index_in_cycle(const HashTable_t* const ht, const ht_index_t i)
+{
+	return (i + 1) % ht->capacity;
+}
+
+ht_index_t find_index_of_key(const HashTable_t* const ht, const char* const key)
 {
 	ht_index_t const hashed_index = ht_hash_key(ht, key);
 	ht_index_t current_index = hashed_index;
 
 	do
 	{
-		if (cell_at_index_has_key(ht, current_index, key))
-			return true;
+		if (ht->states[current_index] == OPEN)
+			return HT_KEY_NOT_FOUND;
 
-		current_index = (current_index + 1) % ht->capacity;
+		if (cell_at_index_has_key(ht, current_index, key))
+			return current_index;
+
+		current_index = next_index_in_cycle(ht, current_index);
 
 	} while (current_index != hashed_index);
 
-	return false;
+	return HT_KEY_NOT_FOUND;
 }
 
-void replace_item_at_index(HashTable_t* const ht, const Article_t* const article, const ht_index_t i)
+bool ht_contains(const HashTable_t* const ht, const char* key)
 {
-	delete_article(ht->items[i]);
-	ht->items[i] = duplicate_article(article);
+	return find_index_of_key(ht, key) != HT_KEY_NOT_FOUND;
 }
 
 void insert_item_at_index(HashTable_t* const ht, const Article_t* const article, const ht_index_t i)
@@ -106,6 +111,12 @@ void insert_item_at_index(HashTable_t* const ht, const Article_t* const article,
 	ht->count++;
 }
 
+void replace_item_at_index(HashTable_t* const ht, const Article_t* const article, const ht_index_t i)
+{
+	delete_article(ht->items[i]);
+	ht->items[i] = duplicate_article(article);
+}
+
 void ht_insert(HashTable_t* const ht, const char* const key, const Article_t* const article)
 {
 	ht_index_t const hashed_index = ht_hash_key(ht, key);
@@ -113,13 +124,13 @@ void ht_insert(HashTable_t* const ht, const char* const key, const Article_t* co
 
 	do
 	{
-		if (cell_at_index_has_key(ht, current_index, key))
-			return replace_item_at_index(ht, article, current_index);
-
 		if (ht->states[current_index] == OPEN)
 			return insert_item_at_index(ht, article, current_index);
 
-		current_index = (current_index + 1) % ht->capacity;
+		if (cell_at_index_has_key(ht, current_index, key))
+			return replace_item_at_index(ht, article, current_index);
+
+		current_index = next_index_in_cycle(ht, current_index);
 
 	} while (current_index != hashed_index);
 }
@@ -131,19 +142,8 @@ unsigned long ht_count(const HashTable_t* const ht)
 
 const Article_t* ht_fetch(const HashTable_t* const ht, const char* const key)
 {
-	ht_index_t const hashed_index = ht_hash_key(ht, key);
-	ht_index_t current_index = hashed_index;
-
-	do
-	{
-		if (cell_at_index_has_key(ht, current_index, key))
-			return ht->items[current_index];
-
-		current_index = (current_index + 1) % ht->capacity;
-
-	} while (current_index != hashed_index);
-
-	return NULL;
+	const ht_index_t i = find_index_of_key(ht, key);
+	return i != HT_KEY_NOT_FOUND ? ht->items[i] : NULL;
 }
 
 void remove_item_at_index(HashTable_t* const ht, const ht_index_t i)
@@ -155,15 +155,8 @@ void remove_item_at_index(HashTable_t* const ht, const ht_index_t i)
 
 void ht_remove(HashTable_t* const ht, const char* const key)
 {
-	ht_index_t const hashed_index = ht_hash_key(ht, key);
-	ht_index_t current_index = hashed_index;
+	const ht_index_t i = find_index_of_key(ht, key);
 
-	do
-	{
-		if (cell_at_index_has_key(ht, current_index, key))
-			return remove_item_at_index(ht, current_index);
-
-		current_index = (current_index + 1) % ht->capacity;
-
-	} while (current_index != hashed_index);
+	if (i != HT_KEY_NOT_FOUND)
+		remove_item_at_index(ht, i);
 }

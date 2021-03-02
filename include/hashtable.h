@@ -7,7 +7,7 @@
 
 typedef struct HashTable_s HashTable_t;
 
-HashTable_t* ht_create(void);
+HashTable_t* ht_new(void);
 void ht_delete(HashTable_t* ht);
 bool ht_is_empty(const HashTable_t* ht);
 bool ht_contains(const HashTable_t* ht, const char* key);

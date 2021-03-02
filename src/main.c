@@ -21,7 +21,7 @@ void test_empty_hash_table()
 	 * Operations - contains, fetch, remove
 	 */
 
-	HashTable_t* const ht = ht_create();
+	HashTable_t* const ht = ht_new();
 	const char* some_doi = "Some_DOI";
 
 	// Initial values
@@ -55,7 +55,7 @@ void test_hash_table_single_article()
 	 * and if it's back to empty after removal of inserted key
 	 */
 
-	HashTable_t* const ht = ht_create();
+	HashTable_t* const ht = ht_new();
 	const char* const inserted_key = "Some_DOI";
 	const char* const not_inserted_key = "Other_DOI";
 
@@ -104,7 +104,7 @@ void test_hash_table_single_article()
 
 void test_hash_table_multiple_articles()
 {
-	HashTable_t* ht = ht_create();
+	HashTable_t* ht = ht_new();
 	const char* key_one = "DOI_one";
 	const char* key_two = "DOI_two";
 	Article_t* article_one = make_article(key_one, "", "", 0);
@@ -145,7 +145,7 @@ void test_hash_table_multiple_articles()
 
 void test_hash_table_insert_override_key()
 {
-	HashTable_t* ht = ht_create();
+	HashTable_t* ht = ht_new();
 	const char* repeat_key = "Repeat_DOI";
 	const char* other_key = "Other_DOI";
 	Article_t* first_version = make_article(repeat_key, "First_Title", "", 0);
@@ -163,7 +163,7 @@ void test_hash_table_insert_override_key()
 	ht_delete(ht);
 
 	// Inserting two articles, removing the first and replacing the second replaces correctly
-	ht = ht_create();
+	ht = ht_new();
 
 	ht_insert(ht, other_key, other_article);
 	ht_insert(ht, repeat_key, first_version);
