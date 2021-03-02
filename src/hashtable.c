@@ -254,3 +254,56 @@ void ht_shrink(HashTable_t* const ht)
 	if (ht->capacity_index != 0)
 		ht_resize(ht, calculate_optimal_capacity_for_index(--ht->capacity_index));
 }
+
+bool item_at_index_was_hashed_directly(const HashTable_t* const ht, const ht_index_t i)
+{
+	return ht_hash_key(ht, key_of(ht->items[i])) == i;
+}
+
+void ht_display_states(HashTable_t* ht, FILE* out)
+{
+	printf("--- Ocupacao da tabela ---------------------------------------\n"
+		   "Capacidade total.....: %10lu\n"
+		   "Valor de N...........: %10u\n"
+		   "Slots ocupados (%%)...: %10lu (%.2f%%)\n\n"
+		   "(.) Posicao vazia\n"
+		   "(o) Posicao vazia, mas que ja foi ocupada\n"
+		   "(H) Posicao ocupada por registro na posicao correta\n"
+		   "(C) Posicao ocupada por registro relocado\n",
+			ht->capacity, ht->capacity_index + 4, ht->count, ht_density(ht));
+
+	printf("-------------------------------------------------------------\n"
+		   "           01234567890123456789012345678901234567890123456789");
+
+	for (ht_index_t i = 0; i < ht->capacity; ++i)
+	{
+		if (i % 50 == 0)
+		{
+			putchar('\n');
+			printf("%10lu", i);
+		}
+
+		switch (ht->states[i])
+		{
+
+		case OPEN:
+			putchar('.');
+			break;
+
+		case OCCUPIED:
+			if (item_at_index_was_hashed_directly(ht, i))
+				putchar('H');
+			else
+				putchar('C');
+			break;
+
+		case REMOVED:
+			putchar('o');
+			break;
+		}
+	}
+
+	printf("\n"
+		   "           01234567890123456789012345678901234567890123456789\n"
+		   "-------------------------------------------------------------\n");
+}

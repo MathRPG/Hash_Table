@@ -2,6 +2,7 @@
 #define HASH_TABLE_H
 
 #include <stdbool.h>
+#include <stdio.h>
 
 #include "article.h"
 
@@ -24,5 +25,6 @@ void ht_remove(HashTable_t* ht, const char* key);
 void ht_resize(HashTable_t* ht, unsigned long new_capacity);
 void ht_expand(HashTable_t* ht);
 void ht_shrink(HashTable_t* ht);
+void ht_display_states(HashTable_t* ht, FILE* out);
 
 #endif //HASH_TABLE_H
